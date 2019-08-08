@@ -54,19 +54,21 @@
   };
 </script>
 
-  <meta name="description" content="哈哈哈，测试一下，第一篇博客。 好记性不如烂笔头，虽然写的可能都是一些废话，但是还是希望以后能坚持下去啊！">
-<meta name="keywords" content="blog">
+  <meta name="description" content="本文主要讲述如何利用flink web来获取flink服务当前的运行负载情况，主要讲述了backPressure的介绍、如何获取backPressure值、返回数据的处理以及自己在项目中遇到的问题。">
+<meta name="keywords" content="flink,爬虫">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Hello Word">
-<meta property="og:url" content="http://yangaidi.com/2019/05/17/Hello World/index.html">
+<meta property="og:title" content="如何利用backPressure接口来监控服务器当前的负载情况">
+<meta property="og:url" content="http://yangaidi.com/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/index.html">
 <meta property="og:site_name" content="这是id啊">
-<meta property="og:description" content="哈哈哈，测试一下，第一篇博客。 好记性不如烂笔头，虽然写的可能都是一些废话，但是还是希望以后能坚持下去啊！">
+<meta property="og:description" content="本文主要讲述如何利用flink web来获取flink服务当前的运行负载情况，主要讲述了backPressure的介绍、如何获取backPressure值、返回数据的处理以及自己在项目中遇到的问题。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-08-08T10:27:11.678Z">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/back_pressure_sampling.png">
+<meta property="og:updated_time" content="2019-08-08T15:23:17.637Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Hello Word">
-<meta name="twitter:description" content="哈哈哈，测试一下，第一篇博客。 好记性不如烂笔头，虽然写的可能都是一些废话，但是还是希望以后能坚持下去啊！">
-  <link rel="canonical" href="http://yangaidi.com/2019/05/17/Hello World/">
+<meta name="twitter:title" content="如何利用backPressure接口来监控服务器当前的负载情况">
+<meta name="twitter:description" content="本文主要讲述如何利用flink web来获取flink服务当前的运行负载情况，主要讲述了backPressure的介绍、如何获取backPressure值、返回数据的处理以及自己在项目中遇到的问题。">
+<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/back_pressure_sampling.png">
+  <link rel="canonical" href="http://yangaidi.com/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/">
 
 
 <script id="page-configurations">
@@ -80,7 +82,7 @@
   };
 </script>
 
-  <title>Hello Word | 这是id啊</title>
+  <title>如何利用backPressure接口来监控服务器当前的负载情况 | 这是id啊</title>
   
 
 
@@ -230,7 +232,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/05/17/Hello World/">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="杨爱迪">
@@ -244,7 +246,7 @@
       <header class="post-header">
 
         
-          <h1 class="post-title" itemprop="name headline">Hello Word
+          <h1 class="post-title" itemprop="name headline">如何利用backPressure接口来监控服务器当前的负载情况
 
             
           </h1>
@@ -261,7 +263,7 @@
                 
               
 
-              <time title="创建时间：2019-05-17 21:18:31" itemprop="dateCreated datePublished" datetime="2019-05-17T21:18:31+08:00">2019-05-17</time>
+              <time title="创建时间：2019-05-21 20:52:04" itemprop="dateCreated datePublished" datetime="2019-05-21T20:52:04+08:00">2019-05-21</time>
             </span>
           
             
@@ -272,13 +274,26 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-08-08 18:27:11" itemprop="dateModified" datetime="2019-08-08T18:27:11+08:00">2019-08-08</time>
+                <time title="修改时间：2019-08-08 23:23:17" itemprop="dateModified" datetime="2019-08-08T23:23:17+08:00">2019-08-08</time>
               </span>
             
           
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/flink/" itemprop="url" rel="index"><span itemprop="name">flink</span></a></span>
+
+                
+                
+              
+            </span>
+          
 
           
-            <span id="/2019/05/17/Hello World/" class="post-meta-item leancloud_visitors" data-flag-title="Hello Word" title="阅读次数">
+            <span id="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/" class="post-meta-item leancloud_visitors" data-flag-title="如何利用backPressure接口来监控服务器当前的负载情况" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -297,8 +312,8 @@
       
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2019/05/17/Hello World/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2019/05/17/Hello World/" itemprop="commentCount"></span>
+    <a title="valine" href="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -315,8 +330,69 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>哈哈哈，测试一下，第一篇博客。</p>
-<p>好记性不如烂笔头，虽然写的可能都是一些废话，但是还是希望以后能坚持下去啊！</p>
+        <p>本文主要讲述如何利用flink web来获取flink服务当前的运行负载情况，主要讲述了backPressure的介绍、如何获取backPressure值、返回数据的处理以及自己在项目中遇到的问题。<br><a id="more"></a></p>
+<h3 id="backpressure简介"><a href="#backpressure简介" class="headerlink" title="backpressure简介"></a>backpressure简介</h3><ul>
+<li>backPressure是flink提供的一个去监控正在运行的任务的运行状态的接口，可以通过调用这个接口去获取当前任务的负载情况（反压机制具体可以参考 <a href="https://zhuanlan.zhihu.com/p/38157397" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/38157397</a>）</li>
+<li>反压监测工作，是通过反复跟踪正在运行任务的堆栈样本来实现，JobManager触发器重复调用作业任务的Thread.getStackTrace()方法（如下图）<br><img src="http://pvx5csxk4.bkt.clouddn.com/back_pressure_sampling.png" alt="avatar"></li>
+<li>如果样本显示一个任务线程阻塞（Stuck）在某个内部方法调用上（从网络堆栈请求缓冲区），这表明该任务有反压.</li>
+<li>默认情况下，JobManager会每隔50ms触发对一个作业的每个任务依次进行100次堆栈跟踪调用,根据调用结果来确认反压。在web界面看到的比率值，它表示在一个内部方法调用中阻塞（Stuck）的堆栈跟踪次数。例如:0.01表明100次仅有1次方法调用被阻塞<ul>
+<li>OK: 0 &lt;= Ratio &lt;= 0.10</li>
+<li>LOW: 0.10 &lt; Ratio &lt;= 0.5</li>
+<li>HIGH: 0.5 &lt; Ratio &lt;= 1</li>
+</ul>
+</li>
+<li><p>为了防止JobManager堆栈跟踪抽样超负荷，web界面刷新抽样频率为60秒</p>
+<h3 id="如何获取反压制"><a href="#如何获取反压制" class="headerlink" title="如何获取反压制"></a>如何获取反压制</h3></li>
+<li><p>反压是一个给web页面提供的接口，那在我们项目内部去如何获取反压制呢，首先肯定是去看flink这个web页面调用的接口是如何实现的，这里有个源码解读可以看下（<a href="http://aitozi.com/flink-backpressure-sample.html" target="_blank" rel="noopener">http://aitozi.com/flink-backpressure-sample.html</a>），我自己也看了下flink的源码，也没有发现在系统内部调用的合适的方式，所以，还是决定采用定时调用web接口的方式来获取反压值</p>
+</li>
+<li>通过查阅flink官网的Rest API（<a href="https://ci.apache.org/projects/flink/flink-docs-stable/monitoring/rest_api.html" target="_blank" rel="noopener">https://ci.apache.org/projects/flink/flink-docs-stable/monitoring/rest_api.html</a>）我们可以找到反压的接口：<ul>
+<li>URL：/jobs/:jobid/vertices/:vertexid/backpressure</li>
+<li>Returns back-pressure information for a job, and may initiate back-pressure sampling if necessary.</li>
+<li>Path parameters<ul>
+<li>jobid - 32-character hexadecimal string value that identifies a job.</li>
+<li>vertexid - 32-character hexadecimal string value that identifies a job vertex.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>有两个参数需要获取，jobid、vertexid，这两个接口可以通过以下两个接口获取<ol>
+<li>/jobs<br>Returns an overview over all jobs and their current state.<ol start="2">
+<li>/jobs/:jobid<br>Returns details of a job.<ul>
+<li>Path parameters</li>
+<li>jobid - 32-character hexadecimal string value that identifies a job.</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>如果你认为这就可以了，那就大错特错，我们知道这些API之后如何去知道服务器地址呢？（localhost？肯定不对啊）通过对flink的web页面抓包我们可以看到请求的API地址是 proxy/{applicationId}/jobs/{jobId}/vertices/{verticeId}/backpressure ，这个applicationId是什么鬼。<ol>
+<li>首先我们的flink都是运行在yarn上面的，对于 run a single job with flink on yarn 模式来说，一般只有一个 RUNNING job，那我们就是要去yarn上面寻找我们当前的applicationId，然后通过翻阅Hadoop的Rest API文档（<a href="https://hadoop.apache.org/docs/r2.7.3/hadoop-yarn/hadoop-yarn-site/ResourceManagerRest.html#Application_API" target="_blank" rel="noopener">https://hadoop.apache.org/docs/r2.7.3/hadoop-yarn/hadoop-yarn-site/ResourceManagerRest.html#Application_API</a>），我们可以找到一个接口（怎么翻到的。。。）：<ul>
+<li>http://<rm http address:port>/ws/v1/cluster/apps<ul>
+<li>state [deprecated] - state of the application</li>
+<li>states - applications matching the given application states, specified as a comma-separated list.</li>
+<li>finalStatus - the final status of the application - reported by the application itself</li>
+<li>user - user name</li>
+<li>queue - queue name</li>
+<li>limit - total number of app objects to be returned</li>
+<li>startedTimeBegin - applications with start time beginning with this time, specified in ms since epoch</li>
+<li>startedTimeEnd - applications with start time ending with this time, specified in ms since epoch</li>
+<li>finishedTimeBegin - applications with finish time beginning with this time, specified in ms since epoch</li>
+<li>finishedTimeEnd - applications with finish time ending with this time, specified in ms since epoch</li>
+<li>applicationTypes - applications matching the given application types, specified as a comma-separated list.</li>
+<li>applicationTags - applications matching any of the given application tags, specified as a comma-separated list.</li>
+</ul>
+</rm></li>
+</ul>
+</li>
+</ol>
+</li>
+<li>通过输入我们的用户名、项目名就ok了，get到applicationId，然后就找到了我们的flink-web的URL前缀，然后按照flink api获取数据就可以了<h3 id="返回数据的处理"><a href="#返回数据的处理" class="headerlink" title="返回数据的处理"></a>返回数据的处理</h3></li>
+<li>目前拿到backPressure的ratios后只是进行简单的判断，如果小于0.1那就让规则数量增长一倍，如果小于0.5就增长20%，如果大于0.5，就保持不变</li>
+<li>这个策略是通过一个函数来实现的，以后可以继续根据需求进行完善<h3 id="遇到的问题"><a href="#遇到的问题" class="headerlink" title="遇到的问题"></a>遇到的问题</h3></li>
+<li>ratios全部都是1（100%）的情况</li>
+<li>//todo<h3 id="对于backPressure值的深入理解"><a href="#对于backPressure值的深入理解" class="headerlink" title="对于backPressure值的深入理解"></a>对于backPressure值的深入理解</h3>本来以为自己对backPressure的理解很透彻了，后来在做项目的时候还是遇到了相关的问题，掉到了一个大坑里，后来发现是自己对backPressure的理解还是有点偏差，见下一篇博文（fixme）</li>
+</ul>
 
     </div>
 
@@ -332,7 +408,9 @@
           
           <div class="post-tags">
             
-              <a href="/tags/blog/" rel="tag"># blog</a>
+              <a href="/tags/flink/" rel="tag"># flink</a>
+            
+              <a href="/tags/爬虫/" rel="tag"># 爬虫</a>
             
           </div>
         
@@ -342,14 +420,18 @@
           <div class="post-nav">
             <div class="post-nav-next post-nav-item">
               
+                <a href="/2019/05/17/Hello World/" rel="next" title="Hello Word">
+                  <i class="fa fa-chevron-left"></i> Hello Word
+                </a>
+              
             </div>
 
             <span class="post-nav-divider"></span>
 
             <div class="post-nav-prev post-nav-item">
               
-                <a href="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/" rel="prev" title="如何利用backPressure接口来监控服务器当前的负载情况">
-                  如何利用backPressure接口来监控服务器当前的负载情况 <i class="fa fa-chevron-right"></i>
+                <a href="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/" rel="prev" title="flink使用匿名内部类在序列化时出现的问题">
+                  flink使用匿名内部类在序列化时出现的问题 <i class="fa fa-chevron-right"></i>
                 </a>
               
             </div>
@@ -385,8 +467,17 @@
 
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <div class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
 
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -468,6 +559,23 @@
 
         </div>
       </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#backpressure简介"><span class="nav-number">1.</span> <span class="nav-text">backpressure简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#如何获取反压制"><span class="nav-number">2.</span> <span class="nav-text">如何获取反压制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#返回数据的处理"><span class="nav-number">3.</span> <span class="nav-text">返回数据的处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#遇到的问题"><span class="nav-number">4.</span> <span class="nav-text">遇到的问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#对于backPressure值的深入理解"><span class="nav-number">5.</span> <span class="nav-text">对于backPressure值的深入理解</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
 
     </div>
   </aside>

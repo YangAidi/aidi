@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.8.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=7.3.0">
+  <link rel="mask-icon" href="/favicon.ico?v=7.3.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.3.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    save_scroll: false,
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="flink在处理kafka的消息时出现周期性堆积，堆积到五分钟就一次消费完了？">
+<meta name="keywords" content="flink,Java,kafka">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次flink处理kafka消息时的周期性堆积问题">
+<meta property="og:url" content="http://yangaidi.com/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/index.html">
+<meta property="og:site_name" content="这是id啊">
+<meta property="og:description" content="flink在处理kafka的消息时出现周期性堆积，堆积到五分钟就一次消费完了？">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/F6334B02-C067-4C75-AF09-84F4BBEB7F57.png">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/QQ20190605-213357@2x.png">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/QQ20190605-204813@2x.png">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/QQ20190605-204813@2x.png">
+<meta property="og:updated_time" content="2019-08-08T14:14:25.133Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="记一次flink处理kafka消息时的周期性堆积问题">
+<meta name="twitter:description" content="flink在处理kafka的消息时出现周期性堆积，堆积到五分钟就一次消费完了？">
+<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/F6334B02-C067-4C75-AF09-84F4BBEB7F57.png">
+  <link rel="canonical" href="http://yangaidi.com/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>记一次flink处理kafka消息时的周期性堆积问题 | 这是id啊</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <div class="container sidebar-position-left">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">这是id啊</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">杨爱迪以后要坚持写博客啊！</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content page-post-detail">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">记一次flink处理kafka消息时的周期性堆积问题
+
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-06 21:57:16" itemprop="dateCreated datePublished" datetime="2019-06-06T21:57:16+08:00">2019-06-06</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 22:14:25" itemprop="dateModified" datetime="2019-08-08T22:14:25+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/flink/" itemprop="url" rel="index"><span itemprop="name">flink</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/" class="post-meta-item leancloud_visitors" data-flag-title="记一次flink处理kafka消息时的周期性堆积问题" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>flink在处理kafka的消息时出现周期性堆积，堆积到五分钟就一次消费完了？</p>
+<a id="more"></a>
+<h3 id="有的没的背景故事"><a href="#有的没的背景故事" class="headerlink" title="有的没的背景故事"></a>有的没的背景故事</h3><ul>
+<li>今天把做的几个flink demo部署到线上测试，“一切正常”，符合预期，1分钟后准时在目标kafka收到聚合的消息，然后开开心心的去继续完善自己的代码。</li>
+<li>咕嘟咕嘟！POPO的消息传来！<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[Avatar报警系统][opsys][2019-06-05 11:36:03]-monitor3_flink_app:</span><br><span class="line">集群名: huitong2</span><br><span class="line">Topic名: xxx</span><br><span class="line">Group名: xxx</span><br><span class="line">Lag(条):                        3021145</span><br><span class="line">平均生产速率(条/s)： 10915.00</span><br><span class="line">平均消费速率(条/s)： 0.00</span><br><span class="line">预估处理时间：           生产速度大于消费速度</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>蛤？又是这个问题，我明明才把项目启动两分钟？这么及时就报警了？先把报警关了，单独屏蔽我这个测试的项目，不然要被其他人打死。<br>好，报警没了，安心debug，一项一项去排查问题</p>
+<h3 id="问题排查"><a href="#问题排查" class="headerlink" title="问题排查"></a>问题排查</h3><ol>
+<li>先去看kafka的堆积数量，果然我这个分组在以1秒1w条的速度在不停的堆积</li>
+<li>输出没问题，正常输出，但是数据数量自己也不知道1s应该有多少输出，所以没办法知道究竟消费速度是多少</li>
+<li>去看flink的负载情况，发现30个算子基本负载都为0，所以不是因为flink的资源不足造成的</li>
+<li>继续排查的过程中，发现kafka的统计大概成下面这个样子，<strong>每8-9分钟达到堆积的顶峰，然后被瞬间消费掉，在顶峰过去之后处理速度将为0，然后等到下一个堆积顶峰又一次性处理</strong><br><img src="http://pvx5csxk4.bkt.clouddn.com/F6334B02-C067-4C75-AF09-84F4BBEB7F57.png" alt="7f09538029ce6bf743a0e34528a1ac57.png"></li>
+</ol>
+<h3 id="“深入分析”"><a href="#“深入分析”" class="headerlink" title="“深入分析”"></a>“深入分析”</h3><ul>
+<li>问题的大概症状找到了，大概率是出现在kafka的问题上，是kafka服务的问题，flink connector的问题？或者是自己代码的问题？</li>
+<li>思索一波，首先代码是没有bug的，在自己本地debug是没有任何异常的（本地没有使用kafka，是直接mock的数据），然后把可能出现的问题写了出来<br><img src="http://pvx5csxk4.bkt.clouddn.com/QQ20190605-213357@2x.png" alt="95b984b9d3bae50f244b073c39b164aa.png"><br>开搞吧，控制变量法（不过这是真的蠢，因为在集群上部署一次至少要3-5分钟，然后观察数据是否正常有需要5分钟以上，不过也苦于没有更好的方法，只凭想也想不出个所以然）。</li>
+<li>第一个自己感觉是出现了类似于上次的数据倾斜，问题，是因为分区的事情（可以参考这个<a href="https://g.126.fm/01OElos" target="_blank" rel="noopener">https://g.126.fm/01OElos</a>），然后还有可能是因为自己这次工程用了10个流，流之间可能大概有20个左右的数据通道，所以简单粗暴，就是只做从源kafka收到消息，然后发送到目标kafka，kafka source数量和分区数量保持一致，这样肯定不会出现出现问题了吧。然后自己的架构就变成了下面这个样子<br><img src="http://pvx5csxk4.bkt.clouddn.com/QQ20190605-204813@2x.png" alt="34ebc2348af7f38226b4cff58429eec6.png"><br>简单粗暴，但是，好像问题还没有解决？？？还是不停的产生堆积！！！这也太打脸了吧。</li>
+<li>不行，我怀疑是kafka服务器的问题，我再启动这个项目的旧版本试试，没问题！！！能跑！！！没有堆积！！！是这个版本的代码才会出现的问题<br>感觉自己又要陷入考魔改代码、疯狂调参才能debug的歧路了，不行，这次要平心静气的分析下原因</li>
+</ul>
+<h3 id="再次“深入分析”"><a href="#再次“深入分析”" class="headerlink" title="再次“深入分析”"></a>再次“深入分析”</h3><p>总结下堆积出现的问题：</p>
+<ol>
+<li>8-9分钟出现山峰，然后瞬间被处理，再缓慢堆积</li>
+<li>程序没有问题，因为能在山峰的那一瞬间把消息处理完，而且输出的数据也很平稳，每秒1k条</li>
+<li>就是说消息被堵住了？然后再被平稳的放出来，这像极了flink的window机制啊，但是肯定不是window的鬼，因为上一部分已经把所有的flink内部逻辑注释掉了，包括window，还是有这个问题，说明不是window的问题</li>
+</ol>
+<p>以上就说明了问题肯定出在了kafka connector上面</p>
+<ol>
+<li>检查我的kafka配置看看和之前有没有差别，一毛一样，排除kafka配置问题</li>
+<li>那就是版本问题咯，因为之前是flink1.6现在是1.7，可是升级信息里面没有说这个啊，而且自己去kafka connector的页面也没有找到相关的信息啊，这个原因暂时不去探究，避免无用功（当然也害怕真的是这个原因造成的）</li>
+<li>去看输出日志，没有任何error，没有任何相关的warn，但是发现flink在启动过程中，会出现一个配置参数 <code>connections.max.idle.ms = 540000</code>，5400秒正好是9分钟，会不会是这个！仿佛发现了新大陆，但是搜索相关参数发现这个参数并不是自己想找的</li>
+<li><p>又陷入了瓶颈，毫无头绪，呆呆的看着各个监控面板，忽然<br><img src="http://pvx5csxk4.bkt.clouddn.com/QQ20190605-204813@2x.png" alt="34ebc2348af7f38226b4cff58429eec6.png"><br>上面出现过的那张图片，之前说</p>
+<blockquote>
+<p>输出没问题，正常输出，但是数据数量自己也不知道1s应该有多少输出，所以没办法知道究竟消费速度是多少</p>
+</blockquote>
+<p> 从kafka输出上面确实没办法看，但是可以从flink的读入数据看究竟消费了多少数据啊，就是绿色的框框起来的，真是欲哭无泪啊！看到了这个数值，一秒1w条，和kafka生产速度一致！没有问题，消费没有问题，有问题的是ACK！消费之后没有ACK！</p>
+<ul>
+<li><p>看了下配置文件里并没有ACK的参数，于是尝试着去谷歌一下 <code>flink connections.max.idle.ms ack</code> 没有想要的，上面也说了，这个参数和ack没有关系，540秒只是个巧合罢了。但是这个的问题确实是 kafka没有ACK造成的，搜索了一番没有找到好的结果，还是去翻阅翻阅官方文档吧，全局搜索 <code>ACK</code>三个字母，匹配到了很多 <code>back</code>的文档，或许是巧合或许是幸运吧,匹配到了下面一段：   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Kafka Consumers Offset Committing Behaviour Configuration</span><br><span class="line">The Flink Kafka Consumer allows configuring the behaviour of how offsets are committed back to Kafka brokers (or Zookeeper in 0.8). Note that the Flink Kafka Consumer does not rely on the committed offsets for fault tolerance guarantees. The committed offsets are only a means to expose the consumer’s progress for monitoring purposes.</span><br><span class="line">The way to configure offset commit behaviour is different, depending on whether or not checkpointing is enabled for the job.</span><br><span class="line"></span><br><span class="line">1. Checkpointing disabled: if checkpointing is disabled, the Flink Kafka Consumer relies on the automatic periodic offset committing capability of the internally used Kafka clients. Therefore, to disable or enable offset committing, simply set the enable.auto.commit (or auto.commit.enable for Kafka 0.8) / auto.commit.interval.ms keys to appropriate values in the provided Properties configuration.</span><br><span class="line">2. Checkpointing enabled: if checkpointing is enabled, the Flink Kafka Consumer will commit the offsets stored in the checkpointed states when the checkpoints are completed. This ensures that the committed offsets in Kafka brokers is consistent with the offsets in the checkpointed states. Users can choose to disable or enable offset committing by calling the setCommitOffsetsOnCheckpoints(boolean) method on the consumer (by default, the behaviour is true). Note that in this scenario, the automatic periodic offset committing settings in Properties is completely ignored.</span><br></pre></td></tr></table></figure>
+<p>文章太长，说下意思吧，就是</p>
+</li>
+</ul>
+<ol>
+<li>如果禁用checkpoint，则Flink Kafka Consumer依赖于内部使用的Kafka客户端的自动定期偏移提交功能</li>
+<li><p>如果启用了checkpoint，则Flink Kafka Consumer将在checkpoint完成时提交存储在checkpoint状态中的偏移量。这可确保Kafka代理中的offset与checkpoint状态中的偏移量一致</p>
+<p>瞬间知道问题出现在哪了，去检查自己的配置文件<br><code>checkpointInterval=500000</code><br>正好500秒，问题解决！！！！！</p>
+</li>
+</ol>
+</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p> 原因就是因为自己设置了checkpoint时间是500s，所以kafka connector就会500s同步一下状态，然后更新offset，也就造成了8-9分钟出现一次山峰，然后瞬间消失，其他时候处理速度都是0，其实flink这个过程中是在不停地处理数据的，但是没有及时告知kafka服务器</p>
+<h3 id="背锅时刻"><a href="#背锅时刻" class="headerlink" title="背锅时刻"></a>背锅时刻</h3><p> 好，说到这，为啥我要改这个checkpoint数据呢？这。。。因为checkpoint的时候会打很多日志，当你开了N个slot的时候，同步的那一瞬间会打N条日志，而在debug的过程中，自己为了分析日志方便，把这个checkpoint时长从5s变成了500s，都是测试阶段，想着这个checkpoint主要是负责状态恢复的，不回影响所以就没注意，debug的时候也没有想到这个，真的是哭瞎了，又浪费了宝贵的时间。</p>
+<p> <strong>好记性不如烂笔头，再次写下一篇日记记录下，加深印象</strong></p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/flink/" rel="tag"># flink</a>
+            
+              <a href="/tags/Java/" rel="tag"># Java</a>
+            
+              <a href="/tags/kafka/" rel="tag"># kafka</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/" rel="next" title="通过后缀表达式计算逻辑表达式的一个demo">
+                  <i class="fa fa-chevron-left"></i> 通过后缀表达式计算逻辑表达式的一个demo
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/" rel="prev" title="使用二叉树剪枝加速计算逻辑表达式结果">
+                  使用二叉树剪枝加速计算逻辑表达式结果 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨爱迪</p>
+  <div class="site-description motion-element" itemprop="description">aidi@pku.edu.cn</div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/YangAidi" title="GitHub &rarr; https://github.com/YangAidi" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#有的没的背景故事"><span class="nav-number">1.</span> <span class="nav-text">有的没的背景故事</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#问题排查"><span class="nav-number">2.</span> <span class="nav-text">问题排查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#“深入分析”"><span class="nav-number">3.</span> <span class="nav-text">“深入分析”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#再次“深入分析”"><span class="nav-number">4.</span> <span class="nav-text">再次“深入分析”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#背锅时刻"><span class="nav-number">6.</span> <span class="nav-text">背锅时刻</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨爱迪</span>
+</div>
+<span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+<span id="busuanzi_container_site_uv">
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+<script src="/js/utils.js?v=7.3.0"></script>
+  <script src="/js/motion.js?v=7.3.0"></script>
+
+
+  <script src="/js/affix.js?v=7.3.0"></script>
+  <script src="/js/schemes/pisces.js?v=7.3.0"></script>
+
+
+<script src="/js/next-boot.js?v=7.3.0"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  <script>
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var $visitors = $('.leancloud_visitors');
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            
+            Counter('put', '/classes/Counter/' + counter.objectId, JSON.stringify({ time: { '__op': 'Increment', 'amount': 1 } }))
+              .fail(function ({ responseJSON }) {
+                console.log(`Failed to save Visitor num, with error message: ${responseJSON.error}`);
+              })
+          } else {
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1 }))
+                .done(function() {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function() {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var entries = [];
+      var $visitors = $('.leancloud_visitors');
+
+      $visitors.each(function() {
+        entries.push( $(this).attr('id').trim() );
+      });
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url: { '$in': entries } }) })
+        .done(function({ results }) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.url;
+            var time = item.time;
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for (var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if (countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  }
+
+  $(function() {
+    $.get('https://app-router.leancloud.cn/2/route?appId=' + 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz')
+      .done(function({ api_server }) {
+        var Counter = function(method, url, data) {
+          return $.ajax({
+            method: method,
+            url: `https://${api_server}/1.1${url}`,
+            headers: {
+              'X-LC-Id': 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+              'X-LC-Key': 'enB6iR4fNOYLktExCbGuw41S',
+              'Content-Type': 'application/json',
+            },
+            data: data
+          });
+        };
+        if (CONFIG.page.isPost) {
+          const localhost = /http:\/\/(localhost|127.0.0.1|0.0.0.0)/;
+          if (localhost.test(document.URL)) return;
+          addCount(Counter);
+        } else {
+          if ($('.post-title-link').length >= 1) {
+            showTime(Counter);
+          }
+        }
+      });
+  });
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+  
+  <script src="/js/scrollspy.js?v=7.3.0"></script>
+<script src="/js/post-details.js?v=7.3.0"></script>
+
+
+    
+
+<script>
+NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', function() {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail,link';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+    appKey: 'enB6iR4fNOYLktExCbGuw41S',
+    placeholder: '在此输入您的留言',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+
+</body>
+</html>

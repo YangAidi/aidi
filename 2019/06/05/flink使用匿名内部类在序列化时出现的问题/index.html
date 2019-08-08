@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.8.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=7.3.0">
+  <link rel="mask-icon" href="/favicon.ico?v=7.3.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.3.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    save_scroll: false,
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="这几天在做项目的时候开始尝试使用匿名内部类生成集合类对象，十分的爽，本来好几行的代码变成了一个花括弧就解决，但是在做一个flink的路径优化的算法时，出现了一个离奇的bug org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next o">
+<meta name="keywords" content="flink,Java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="flink使用匿名内部类在序列化时出现的问题">
+<meta property="og:url" content="http://yangaidi.com/2019/06/05/flink使用匿名内部类在序列化时出现的问题/index.html">
+<meta property="og:site_name" content="这是id啊">
+<meta property="og:description" content="这几天在做项目的时候开始尝试使用匿名内部类生成集合类对象，十分的爽，本来好几行的代码变成了一个花括弧就解决，但是在做一个flink的路径优化的算法时，出现了一个离奇的bug org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next o">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/QQ20190604-182202.png">
+<meta property="og:updated_time" content="2019-08-08T13:54:34.100Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="flink使用匿名内部类在序列化时出现的问题">
+<meta name="twitter:description" content="这几天在做项目的时候开始尝试使用匿名内部类生成集合类对象，十分的爽，本来好几行的代码变成了一个花括弧就解决，但是在做一个flink的路径优化的算法时，出现了一个离奇的bug org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next o">
+<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/QQ20190604-182202.png">
+  <link rel="canonical" href="http://yangaidi.com/2019/06/05/flink使用匿名内部类在序列化时出现的问题/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>flink使用匿名内部类在序列化时出现的问题 | 这是id啊</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <div class="container sidebar-position-left">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">这是id啊</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">杨爱迪以后要坚持写博客啊！</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content page-post-detail">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/06/05/flink使用匿名内部类在序列化时出现的问题/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">flink使用匿名内部类在序列化时出现的问题
+
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-05 21:44:57" itemprop="dateCreated datePublished" datetime="2019-06-05T21:44:57+08:00">2019-06-05</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 21:54:34" itemprop="dateModified" datetime="2019-08-08T21:54:34+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/flink/" itemprop="url" rel="index"><span itemprop="name">flink</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/" class="post-meta-item leancloud_visitors" data-flag-title="flink使用匿名内部类在序列化时出现的问题" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>这几天在做项目的时候开始尝试使用匿名内部类生成集合类对象，十分的爽，本来好几行的代码变成了一个花括弧就解决，但是在做一个flink的路径优化的算法时，出现了一个离奇的bug <code>org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next operator</code>，匿名内部类背锅？<br><a id="more"></a></p>
+<h4 id="使用匿名内部类快速创建对象"><a href="#使用匿名内部类快速创建对象" class="headerlink" title="使用匿名内部类快速创建对象"></a>使用匿名内部类快速创建对象</h4><p>这几天发现一个使用匿名内部类生成集合类对象的快捷方式，比如下面这样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public static final Set&lt;Integer&gt; PATH10 = new           HashSet&lt;Integer&gt;() &#123;</span><br><span class="line">        &#123;</span><br><span class="line">            add(1);</span><br><span class="line">            add(5);</span><br><span class="line">            add(10);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure></p>
+<p>或者这样<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public static final Map&lt;Integer, Set&lt;Integer&gt;&gt; PATH_MAP = new HashMap&lt;Integer, Set&lt;Integer&gt;&gt;() &#123;</span><br><span class="line">        &#123;</span><br><span class="line">            put(2, PATH2);</span><br><span class="line">            put(3, PATH3);</span><br><span class="line">            put(5, PATH5);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure></p>
+<p>仿佛发现了新世界的大门，然后变开始疯狂使用匿名内部类来创建一些对象。</p>
+<h4 id="离奇报错"><a href="#离奇报错" class="headerlink" title="离奇报错"></a>离奇报错</h4><p>但是今天在做一个flink的路径优化的算法时，出现了一个离奇的bug<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next operator</span><br><span class="line">    at org.apache.flink.streaming.runtime.tasks.OperatorChain$CopyingChainingOutput.pushToOperator(OperatorChain.java:596)</span><br><span class="line">    at org.apache.flink.streaming.runtime.tasks.OperatorChain$CopyingChainingOutput.collect(OperatorChain.java:554)</span><br><span class="line">    at org.apache.flink.streaming.runtime.tasks.OperatorChain$CopyingChainingOutput.collect(OperatorChain.java:534)</span><br><span class="line">    at org.apache.flink.streaming.api.operators.AbstractStreamOperator$CountingOutput.collect(AbstractStreamOperator.java:718)</span><br><span class="line">    at org.apache.flink.streaming.api.operators.AbstractStreamOperator$CountingOutput.collect(AbstractStreamOperator.java:696)</span><br><span class="line">    at org.apache.flink.streaming.api.operators.TimestampedCollector.collect(TimestampedCollector.java:51)</span><br><span class="line">Caused by: java.lang.NullPointerException</span><br><span class="line">    at java.util.ArrayList.ensureExplicitCapacity(ArrayList.java:238)</span><br><span class="line">    at java.util.ArrayList.ensureCapacityInternal(ArrayList.java:231)</span><br><span class="line">    at java.util.ArrayList.add(ArrayList.java:462)</span><br><span class="line">    at com.esotericsoftware.kryo.serializers.CollectionSerializer.copy(CollectionSerializer.java:131)</span><br><span class="line">    at com.esotericsoftware.kryo.serializers.CollectionSerializer.copy(CollectionSerializer.java:22)</span><br><span class="line">    at com.esotericsoftware.kryo.Kryo.copy(Kryo.java:862)</span><br><span class="line">    at com.esotericsoftware.kryo.serializers.MapSerializer.copy(MapSerializer.java:157)</span><br><span class="line">    at com.esotericsoftware.kryo.serializers.MapSerializer.copy(MapSerializer.java:21)</span><br><span class="line">    at com.esotericsoftware.kryo.Kryo.copy(Kryo.java:862)</span><br><span class="line">    at org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer.copy(KryoSerializer.java:217)</span><br><span class="line">    at org.apache.flink.api.java.typeutils.runtime.PojoSerializer.copy(PojoSerializer.java:243)</span><br><span class="line">    at org.apache.flink.api.java.typeutils.runtime.TupleSerializer.copy(TupleSerializer.java:104)</span><br><span class="line">    at org.apache.flink.api.java.typeutils.runtime.TupleSerializer.copy(TupleSerializer.java:30)</span><br><span class="line">    at org.apache.flink.streaming.runtime.tasks.OperatorChain$CopyingChainingOutput.pushToOperator(OperatorChain.java:577)</span><br><span class="line">    ... 14 more</span><br></pre></td></tr></table></figure></p>
+<p>这个错误发生我只是改了一个参数的类型，从<code>Set&lt;Integer&gt;</code>改成了<code>Map&lt;Integer,Set&lt;Integer&gt;&gt;</code>，然后整个服务就挂掉了，百思不得其解。</p>
+<h4 id="漫漫debug之路"><a href="#漫漫debug之路" class="headerlink" title="漫漫debug之路"></a>漫漫debug之路</h4><ul>
+<li>谷歌关于 <code>Could not forward element to next operator</code> 的结果一般都是数据源为null，或者Tuple contains a null field，但是我只是改了个字段格式啊，怎么就成null了，打断点看确认不是null，这。。。又卡住了。</li>
+</ul>
+<ul>
+<li><p>不然我造一个null看看什么效果，于是把Map&lt;Integer,Set<integer>&gt;这个字段直接改成了null，能跑，没问题！！！？？？什么情况，null能跑，我添加上自己的数据就挂了</integer></p>
+</li>
+<li><p>null可以跑，试了下 <code>new HashMap&lt;Integer, List&lt;Integer&gt;&gt;()</code> 也没问题，也就是说自己的赋值语句的问题，不是格式的问题，好吧那就来详细的看下我的赋值语句吧</p>
+</li>
+</ul>
+<h4 id="代码对比"><a href="#代码对比" class="headerlink" title="代码对比"></a>代码对比</h4><p>这个是自己的代码，做了一些脱敏处理，可以看到在 else部分使用了静态内部类生成list并添加到map中<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Integer&gt; sortTimes = new ArrayList&lt;&gt;(times);</span><br><span class="line">Collections.sort(sortTimes);</span><br><span class="line">Map&lt;Integer, List&lt;Integer&gt;&gt; pathResult = new HashMap&lt;Integer, List&lt;Integer&gt;&gt;();</span><br><span class="line">    Integer older = sortTimes.get(i);</span><br><span class="line">    Integer elder = sortTimes.get(j);</span><br><span class="line">        if(older %elder ==0)&#123;</span><br><span class="line">        if (pathResult.containsKey(elder)) &#123;</span><br><span class="line">            pathResult.get(elder).add(older);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            pathResult.put(elder, new ArrayList&lt;Integer&gt;() &#123;</span><br><span class="line">                &#123;</span><br><span class="line">                    add(older);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>写出来这个之后，自己甚至还有点沾沾自喜？但是一运行就是有错误，那是因为我这个map或者set插入数据之后就会有问题呢？或者是因为数据来源sortTimes的问题？</p>
+<ul>
+<li><p>数据源有问题，那我试试自己写死数据源试试，竟然真的跑通了！！！喜极而泣！可是，这是为啥啊，这是为啥啊，这是为啥啊，这和我的数据格式一模一样啊，里面的数据也一模一样啊</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;Integer, List&lt;Integer&gt;&gt; test = new HashMap&lt;Integer, List&lt;Integer&gt;&gt;();</span><br><span class="line">List&lt;Integer&gt; test2 = new ArrayList&lt;&gt;();</span><br><span class="line">test2.add(15);</span><br><span class="line">List&lt;Integer&gt; test22 = new ArrayList&lt;&gt;();</span><br><span class="line">test22.add(60);</span><br><span class="line">test.put(5, test2);</span><br><span class="line">test.put(15, test22);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>既然是数据源有问题，那就先魔改（xjbg）自己的数据源sortTimes，生成方式竟然还使用lamda表达式？竟然还是使用 <code>List&lt;Integer&gt; sortTimes = new ArrayList&lt;&gt;(times);</code>这么骚的方式？竟然还有 <code>Collections.sort(sortTimes);</code>排序，不行，全部取消，全部都用最原始的for循环解决，我就不信还会有问题！一阵魔改之后，bug依旧，囧</p>
+</li>
+<li>这问题好像还真不简单，可是俩数据都是一模一样的啊，格式类型也“一模一样”（当我打开断点对比后，收回这句话）</li>
+</ul>
+<h4 id="继续找bug"><a href="#继续找bug" class="headerlink" title="继续找bug"></a>继续找bug</h4><ul>
+<li>明明数据一模一样，就是结果不同，直接把俩代码弄到一起跑，打断点一行一行看有什么区别</li>
+</ul>
+<p><img src="http://pvx5csxk4.bkt.clouddn.com/QQ20190604-182202.png" alt="48466e698d753d213eea85f03789bb90.png"></p>
+<ul>
+<li>果然，两个map里的list的类型竟然不一样，我明明声明的都是 <code>Map&lt;Integer,Set&lt;Integer&gt;&gt;</code>啊！！！而下面这个为什么不是list类型，而是他所在的“实体类的类型”，为啥会这样，为啥会这样？</li>
+<li>仔细对比代码，生成逻辑唯一的差别可能是这个list的生成方式不一样？有错误的使用了一行代码就从生成到put进map，而那个挫代码一个一个new然后put，不然我也试试，把这个也降级下，死马当成活马医</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Map&lt;Integer, List&lt;Integer&gt;&gt; pathResult = new HashMap&lt;Integer, List&lt;Integer&gt;&gt;();</span><br><span class="line">for (int i = sortTimes.size() - 1; i &gt;= 0; --i) &#123;</span><br><span class="line">    for (int j = i - 1; j &gt;= 0; --j) &#123;</span><br><span class="line">        Integer older = sortTimes.get(i);</span><br><span class="line">        Integer elder = sortTimes.get(j);</span><br><span class="line">        if (older % elder == 0) &#123;</span><br><span class="line">            if (pathResult.containsKey(elder)) &#123;</span><br><span class="line">                pathResult.get(elder).add(older);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                List&lt;Integer&gt; list = new ArrayList&lt;&gt;();</span><br><span class="line">                list.add(older);</span><br><span class="line">                pathResult.put(elder,list);</span><br><span class="line">            &#125;</span><br><span class="line">            break;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>真丑！然后，无情打脸，这段丑代码竟然真的能运行了？？？这，刚学的炫技新操作坑了自己？欲哭无泪</li>
+</ul>
+<h4 id="原因分析"><a href="#原因分析" class="headerlink" title="原因分析"></a>原因分析</h4><p>问题找到了，匿名内部类背锅，可是为啥呢，赶紧再去谷歌一波吧</p>
+<ol>
+<li>为什么使用匿名内部类和直接创建的list格式不一样呢？<br> 前者是属性所在的实体类XXX.class是吗？当我仔细看时，才发现他的类名是XXX$1（这是当你创建匿名内部类时会帮你生成一个类名）,而后者生成的是根正标红的ArrayList。所以后者运行的时候肯定不会有问题，前者算是继承了ArrayList生成的一个名叫XXX$1的新类，然后又给这个类注册了代码块，通过代码块来初始化这个集合类，所以正是因为这个类型的原因后面序列化时才会出现问题</li>
+<li>这是flink的项目，里面使用了kryo进行序列化，简单的debug了一下，问题出现在 <code>Collection copy = createCopy(kryo, original);</code><br>这一行，就是将你的原始数据copy到kryo，这段代码会创建一个新的instance，然后将你原始的数据copy到这个instance里面，instance的初始化代码如下：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public &lt;T&gt; T newInstance (Class&lt;T&gt; type) &#123;</span><br><span class="line">	Registration registration = getRegistration(type);</span><br><span class="line">	ObjectInstantiator instantiator = registration.getInstantiator();</span><br><span class="line">	    if (instantiator == null) &#123;</span><br><span class="line">				instantiator = newInstantiator(type);</span><br><span class="line">			registration.setInstantiator(instantiator);</span><br><span class="line">		&#125;</span><br><span class="line">	    return (T)instantiator.newInstance();</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>在这个创建的过程中因为这个匿名内部类的缘故，出现了空指针异常（这里NPE出现的原因就当做一个todo文档以后慢慢补充吧）</p>
+<h4 id="再谈匿名内部类"><a href="#再谈匿名内部类" class="headerlink" title="再谈匿名内部类"></a>再谈匿名内部类</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">List&lt;String&gt; stringList = new ArrayList&lt;String&gt;()&#123;&#123;</span><br><span class="line">    add(&quot;a&quot;);</span><br><span class="line">    add(&quot;b&quot;);</span><br><span class="line">&#125;&#125;;</span><br></pre></td></tr></table></figure>
+<p>外层的 {} 定义了一个 ArrayList 的匿名内部类。内层的 {} 的定义了一个实例初始化代码块。 这个代码块在初始化内部类时执行。所以这里相当于定义了一个匿名内部类，并使用 add 添加元素来初始化。这种方式有几个缺点：</p>
+<ul>
+<li>使用匿名内部类，会有效率上的损失。当然在大多数情况下，这点效率都是可接受的。</li>
+<li>静态内部类持有所在外部类的引用。如果需要将 List 返回给到其他地方使用，可能造成内存泄漏。</li>
+<li>序列化时可能会出现异常（这个也是自己血泪的教训啊）</li>
+</ul>
+<p>虽然匿名内部类造成了这么多的困扰，但是用起来还是真香，一行代码实现之前好多行挫代码才能做到的事情！对待他的态度应该像lambda表达式一样吧，省时省力又炫技！但是当出问题，debug时真的是欲哭无泪。所以希望以后多加注意，牵涉到序列化的时候慎用匿名内部类。</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/flink/" rel="tag"># flink</a>
+            
+              <a href="/tags/Java/" rel="tag"># Java</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/" rel="next" title="如何利用backPressure接口来监控服务器当前的负载情况">
+                  <i class="fa fa-chevron-left"></i> 如何利用backPressure接口来监控服务器当前的负载情况
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/" rel="prev" title="通过后缀表达式计算逻辑表达式的一个demo">
+                  通过后缀表达式计算逻辑表达式的一个demo <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨爱迪</p>
+  <div class="site-description motion-element" itemprop="description">aidi@pku.edu.cn</div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/YangAidi" title="GitHub &rarr; https://github.com/YangAidi" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用匿名内部类快速创建对象"><span class="nav-number">1.</span> <span class="nav-text">使用匿名内部类快速创建对象</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#离奇报错"><span class="nav-number">2.</span> <span class="nav-text">离奇报错</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#漫漫debug之路"><span class="nav-number">3.</span> <span class="nav-text">漫漫debug之路</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码对比"><span class="nav-number">4.</span> <span class="nav-text">代码对比</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#继续找bug"><span class="nav-number">5.</span> <span class="nav-text">继续找bug</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#原因分析"><span class="nav-number">6.</span> <span class="nav-text">原因分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#再谈匿名内部类"><span class="nav-number">7.</span> <span class="nav-text">再谈匿名内部类</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨爱迪</span>
+</div>
+<span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+<span id="busuanzi_container_site_uv">
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+<script src="/js/utils.js?v=7.3.0"></script>
+  <script src="/js/motion.js?v=7.3.0"></script>
+
+
+  <script src="/js/affix.js?v=7.3.0"></script>
+  <script src="/js/schemes/pisces.js?v=7.3.0"></script>
+
+
+<script src="/js/next-boot.js?v=7.3.0"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  <script>
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var $visitors = $('.leancloud_visitors');
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            
+            Counter('put', '/classes/Counter/' + counter.objectId, JSON.stringify({ time: { '__op': 'Increment', 'amount': 1 } }))
+              .fail(function ({ responseJSON }) {
+                console.log(`Failed to save Visitor num, with error message: ${responseJSON.error}`);
+              })
+          } else {
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1 }))
+                .done(function() {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function() {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var entries = [];
+      var $visitors = $('.leancloud_visitors');
+
+      $visitors.each(function() {
+        entries.push( $(this).attr('id').trim() );
+      });
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url: { '$in': entries } }) })
+        .done(function({ results }) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.url;
+            var time = item.time;
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for (var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if (countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  }
+
+  $(function() {
+    $.get('https://app-router.leancloud.cn/2/route?appId=' + 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz')
+      .done(function({ api_server }) {
+        var Counter = function(method, url, data) {
+          return $.ajax({
+            method: method,
+            url: `https://${api_server}/1.1${url}`,
+            headers: {
+              'X-LC-Id': 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+              'X-LC-Key': 'enB6iR4fNOYLktExCbGuw41S',
+              'Content-Type': 'application/json',
+            },
+            data: data
+          });
+        };
+        if (CONFIG.page.isPost) {
+          const localhost = /http:\/\/(localhost|127.0.0.1|0.0.0.0)/;
+          if (localhost.test(document.URL)) return;
+          addCount(Counter);
+        } else {
+          if ($('.post-title-link').length >= 1) {
+            showTime(Counter);
+          }
+        }
+      });
+  });
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+  
+  <script src="/js/scrollspy.js?v=7.3.0"></script>
+<script src="/js/post-details.js?v=7.3.0"></script>
+
+
+    
+
+<script>
+NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', function() {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail,link';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+    appKey: 'enB6iR4fNOYLktExCbGuw41S',
+    placeholder: '在此输入您的留言',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+
+</body>
+</html>

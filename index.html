@@ -4,17 +4,17 @@
 
 
 
-<html class="theme-next pisces use-motion" lang="zh-Hans">
+<html class="theme-next pisces use-motion" lang="zh-CN">
 <head>
   <meta charset="UTF-8">
 <meta name="generator" content="Hexo 3.8.0">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <meta name="theme-color" content="#222">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.3.0">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.3.0">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.3.0">
-  <link rel="mask-icon" href="/images/logo.svg?v=7.3.0" color="#222">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=7.3.0">
+  <link rel="mask-icon" href="/favicon.ico?v=7.3.0" color="#222">
 
 <link rel="stylesheet" href="/css/main.css?v=7.3.0">
 
@@ -47,9 +47,9 @@
     path: '',
     motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
     translation: {
-      copy_button: 'Copy',
-      copy_success: 'Copied',
-      copy_failure: 'Copy failed'
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
     }
   };
 </script>
@@ -61,7 +61,7 @@
 <meta property="og:url" content="http://yangaidi.com/index.html">
 <meta property="og:site_name" content="这是id啊">
 <meta property="og:description" content="aidi@pku.edu.cn">
-<meta property="og:locale" content="zh-Hans">
+<meta property="og:locale" content="zh-CN">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="这是id啊">
 <meta name="twitter:description" content="aidi@pku.edu.cn">
@@ -116,7 +116,7 @@
 
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
 
   <div class="container sidebar-position-left">
     <div class="headband"></div>
@@ -137,7 +137,7 @@
   </div>
 
   <div class="site-nav-toggle">
-    <button aria-label="Toggle navigation bar">
+    <button aria-label="切换导航栏">
       <span class="btn-bar"></span>
       <span class="btn-bar"></span>
       <span class="btn-bar"></span>
@@ -157,7 +157,7 @@
       
     
 
-    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>Home</a>
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
 
   </li>
       
@@ -168,7 +168,7 @@
       
     
 
-    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>Archives</a>
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
 
   </li>
       
@@ -179,7 +179,7 @@
       
     
 
-    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>Categories</a>
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
 
   </li>
       
@@ -190,7 +190,7 @@
       
     
 
-    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>Tags</a>
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
 
   </li>
       
@@ -201,7 +201,7 @@
       
     
 
-    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>About</a>
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
 
   </li>
   </ul>
@@ -221,6 +221,676 @@
           <div id="content" class="content page-home">
             
   <section id="posts" class="posts-expand">
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+              
+              <a href="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/" class="post-title-link" itemprop="url">使用二叉树剪枝加速计算逻辑表达式结果</a>
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-20 21:57:16" itemprop="dateCreated datePublished" datetime="2019-06-20T21:57:16+08:00">2019-06-20</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 23:42:48" itemprop="dateModified" datetime="2019-08-08T23:42:48+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/算法/" itemprop="url" rel="index"><span itemprop="name">算法</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/" class="post-meta-item leancloud_visitors" data-flag-title="使用二叉树剪枝加速计算逻辑表达式结果" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>两周前做了个 「<a href="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/">计算逻辑表达式结果的一个demo</a>」，功能上没有什么问题，但是效率上没有太大的优势，在师兄的提醒下，采用AST的思想进行剪枝短路操作，提高运行效率<br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+    
+    
+      <footer class="post-footer">
+          <div class="post-eof"></div>
+        
+      </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+              
+              <a href="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/" class="post-title-link" itemprop="url">记一次flink处理kafka消息时的周期性堆积问题</a>
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-06 21:57:16" itemprop="dateCreated datePublished" datetime="2019-06-06T21:57:16+08:00">2019-06-06</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 22:14:25" itemprop="dateModified" datetime="2019-08-08T22:14:25+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/flink/" itemprop="url" rel="index"><span itemprop="name">flink</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/" class="post-meta-item leancloud_visitors" data-flag-title="记一次flink处理kafka消息时的周期性堆积问题" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>flink在处理kafka的消息时出现周期性堆积，堆积到五分钟就一次消费完了？</p>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+          <div class="post-eof"></div>
+        
+      </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+              
+              <a href="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/" class="post-title-link" itemprop="url">通过后缀表达式计算逻辑表达式的一个demo</a>
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-06 21:57:16" itemprop="dateCreated datePublished" datetime="2019-06-06T21:57:16+08:00">2019-06-06</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 22:03:12" itemprop="dateModified" datetime="2019-08-08T22:03:12+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/算法/" itemprop="url" rel="index"><span itemprop="name">算法</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/" class="post-meta-item leancloud_visitors" data-flag-title="通过后缀表达式计算逻辑表达式的一个demo" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>有一个项目上的需求，需要计算逻辑表达式的结果，比如 <code>(a&amp;b)|(a|b)</code>，似曾相识的感觉，当初学习数据结构时就学了很多通过栈或者树来实现计算表达式结果(面试时二面问的算法也是括号匹配问题，和这个类似)，这次终于派上用场了，参考了下一个大佬写的代码（<a href="https://www.cnblogs.com/flyingbread/archive/2007/02/03/638932.html" target="_blank" rel="noopener">https://www.cnblogs.com/flyingbread/archive/2007/02/03/638932.html</a>）原文是计算算术表达式，这里做了一些修改<br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+    
+    
+      <footer class="post-footer">
+          <div class="post-eof"></div>
+        
+      </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/06/05/flink使用匿名内部类在序列化时出现的问题/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+              
+              <a href="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/" class="post-title-link" itemprop="url">flink使用匿名内部类在序列化时出现的问题</a>
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-05 21:44:57" itemprop="dateCreated datePublished" datetime="2019-06-05T21:44:57+08:00">2019-06-05</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 21:54:34" itemprop="dateModified" datetime="2019-08-08T21:54:34+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/flink/" itemprop="url" rel="index"><span itemprop="name">flink</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/" class="post-meta-item leancloud_visitors" data-flag-title="flink使用匿名内部类在序列化时出现的问题" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>这几天在做项目的时候开始尝试使用匿名内部类生成集合类对象，十分的爽，本来好几行的代码变成了一个花括弧就解决，但是在做一个flink的路径优化的算法时，出现了一个离奇的bug <code>org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next operator</code>，匿名内部类背锅？<br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2019/06/05/flink使用匿名内部类在序列化时出现的问题/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+    
+    
+      <footer class="post-footer">
+          <div class="post-eof"></div>
+        
+      </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+              
+              <a href="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/" class="post-title-link" itemprop="url">如何利用backPressure接口来监控服务器当前的负载情况</a>
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-05-21 20:52:04" itemprop="dateCreated datePublished" datetime="2019-05-21T20:52:04+08:00">2019-05-21</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 23:23:17" itemprop="dateModified" datetime="2019-08-08T23:23:17+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/flink/" itemprop="url" rel="index"><span itemprop="name">flink</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/" class="post-meta-item leancloud_visitors" data-flag-title="如何利用backPressure接口来监控服务器当前的负载情况" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>本文主要讲述如何利用flink web来获取flink服务当前的运行负载情况，主要讲述了backPressure的介绍、如何获取backPressure值、返回数据的处理以及自己在项目中遇到的问题。<br>
+          <!--noindex-->
+          
+            <div class="post-button text-center">
+              <a class="btn" href="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
+        
+      
+    </p></div>
+
+    
+    
+    
+      <footer class="post-footer">
+          <div class="post-eof"></div>
+        
+      </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
       
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
@@ -254,13 +924,13 @@
               <span class="post-meta-item-icon">
                 <i class="fa fa-calendar-o"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
               
                 
               
 
-              <time title="Created: 2019-05-17 21:18:31" itemprop="dateCreated datePublished" datetime="2019-05-17T21:18:31+08:00">2019-05-17</time>
+              <time title="创建时间：2019-05-17 21:18:31" itemprop="dateCreated datePublished" datetime="2019-05-17T21:18:31+08:00">2019-05-17</time>
             </span>
           
             
@@ -270,20 +940,38 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2019-08-08 12:07:37" itemprop="dateModified" datetime="2019-08-08T12:07:37+08:00">2019-08-08</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 18:27:11" itemprop="dateModified" datetime="2019-08-08T18:27:11+08:00">2019-08-08</time>
               </span>
             
           
 
           
-            <span id="/2019/05/17/Hello World/" class="post-meta-item leancloud_visitors" data-flag-title="Hello Word" title="Views">
+            <span id="/2019/05/17/Hello World/" class="post-meta-item leancloud_visitors" data-flag-title="Hello Word" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
-              <span class="post-meta-item-text">Views: </span>
+              <span class="post-meta-item-text">阅读次数：</span>
               <span class="leancloud-visitors-count"></span>
             </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/05/17/Hello World/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/05/17/Hello World/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
           
 
 
@@ -353,12 +1041,71 @@
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">1</span>
-          <span class="site-state-item-name">posts</span>
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span>
         </a>
       </div>
     
   </nav>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/YangAidi" title="GitHub &rarr; https://github.com/YangAidi" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
 
 
 
@@ -386,14 +1133,9 @@
 <span id="busuanzi_container_site_pv">
     本站总访问量<span id="busuanzi_value_site_pv"></span>次
 </span>
-  <span class="post-meta-divider">|</span>
 <span id="busuanzi_container_site_uv">
   本站访客数<span id="busuanzi_value_site_uv"></span>人次
 </span>
-  <span class="post-meta-divider">|</span>
-  <div class="powered-by">Powered by <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> v3.8.0</div>
-  <span class="post-meta-divider">|</span>
-  <div class="theme-info">Theme – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.3.0</div>
 
         
 
@@ -575,6 +1317,32 @@
 
 
   
+    
+
+<script>
+NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', function() {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail,link';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+    appKey: 'enB6iR4fNOYLktExCbGuw41S',
+    placeholder: '在此输入您的留言',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
 
 </body>
 </html>

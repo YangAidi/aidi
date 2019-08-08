@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.8.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=7.3.0">
+  <link rel="mask-icon" href="/favicon.ico?v=7.3.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.3.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    save_scroll: false,
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="两周前做了个 「计算逻辑表达式结果的一个demo」，功能上没有什么问题，但是效率上没有太大的优势，在师兄的提醒下，采用AST的思想进行剪枝短路操作，提高运行效率">
+<meta name="keywords" content="Java,算法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用二叉树剪枝加速计算逻辑表达式结果">
+<meta property="og:url" content="http://yangaidi.com/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/index.html">
+<meta property="og:site_name" content="这是id啊">
+<meta property="og:description" content="两周前做了个 「计算逻辑表达式结果的一个demo」，功能上没有什么问题，但是效率上没有太大的优势，在师兄的提醒下，采用AST的思想进行剪枝短路操作，提高运行效率">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E4%B8%AD%E5%BA%8F%E4%BA%8C%E5%8F%89%E6%A0%91.png">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E9%80%BB%E8%BE%91%E4%BA%8C%E5%8F%89%E6%A0%91.png">
+<meta property="og:updated_time" content="2019-08-08T15:42:48.547Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用二叉树剪枝加速计算逻辑表达式结果">
+<meta name="twitter:description" content="两周前做了个 「计算逻辑表达式结果的一个demo」，功能上没有什么问题，但是效率上没有太大的优势，在师兄的提醒下，采用AST的思想进行剪枝短路操作，提高运行效率">
+<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/%E4%B8%AD%E5%BA%8F%E4%BA%8C%E5%8F%89%E6%A0%91.png">
+  <link rel="canonical" href="http://yangaidi.com/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>使用二叉树剪枝加速计算逻辑表达式结果 | 这是id啊</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <div class="container sidebar-position-left">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">这是id啊</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">杨爱迪以后要坚持写博客啊！</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content page-post-detail">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">使用二叉树剪枝加速计算逻辑表达式结果
+
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-06-20 21:57:16" itemprop="dateCreated datePublished" datetime="2019-06-20T21:57:16+08:00">2019-06-20</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-08 23:42:48" itemprop="dateModified" datetime="2019-08-08T23:42:48+08:00">2019-08-08</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/算法/" itemprop="url" rel="index"><span itemprop="name">算法</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/" class="post-meta-item leancloud_visitors" data-flag-title="使用二叉树剪枝加速计算逻辑表达式结果" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>两周前做了个 「<a href="/2019/06/06/通过后缀表达式计算逻辑表达式的一个demo/">计算逻辑表达式结果的一个demo</a>」，功能上没有什么问题，但是效率上没有太大的优势，在师兄的提醒下，采用AST的思想进行剪枝短路操作，提高运行效率<br><a id="more"></a></p>
+<h3 id="原来的后缀表达式计算方式"><a href="#原来的后缀表达式计算方式" class="headerlink" title="原来的后缀表达式计算方式"></a>原来的后缀表达式计算方式</h3><p>原来的通过后缀表达式计算的原理是：</p>
+<ol>
+<li>将中缀表达式转换成后缀表达式</li>
+<li>通过计算后缀表达式来计算结果</li>
+</ol>
+<p>转换成后缀表达式后，计算路径就是唯一的了，如果想进行优化会比较难，因为后缀表达式只有在全部执行之后才会计算出结果</p>
+<h3 id="使用AST（抽象语法树）进行剪枝加速"><a href="#使用AST（抽象语法树）进行剪枝加速" class="headerlink" title="使用AST（抽象语法树）进行剪枝加速"></a>使用AST（抽象语法树）进行剪枝加速</h3><p>后缀表达式方案拿出来之后，师兄便给提出了建议，使用JDT进行加速，在二叉树遍历的时候提前返回进行剪枝操作，并给我了一个使用Go实现的demo</p>
+<p>关于抽象语法树的概念可以参考<a href="http://huang-jerryc.com/2016/03/15/何为语法树/" target="_blank" rel="noopener">http://huang-jerryc.com/2016/03/15/何为语法树/</a>，由于自己对Go一窍不通，又花了不少时间去学习了下Go的语法和执行机制（这篇文章感觉讲的很不错<a href="https://studygolang.com/articles/19353" target="_blank" rel="noopener">https://studygolang.com/articles/19353</a>）</p>
+<h3 id="二叉树剪枝加速原理"><a href="#二叉树剪枝加速原理" class="headerlink" title="二叉树剪枝加速原理"></a>二叉树剪枝加速原理</h3><p>AST在分析用户的程序时，主要就是将原来的类似于 (2-3)*(4+5) 这样的表达式组织成二叉树，看起来是这样：<br><img src="http://pvx5csxk4.bkt.clouddn.com/%E4%B8%AD%E5%BA%8F%E4%BA%8C%E5%8F%89%E6%A0%91.png" alt="avatar"></p>
+<ul>
+<li>先序遍历: * - 2 3 + 4 5</li>
+<li>中序遍历: 2 - 3 * 4 + 5</li>
+<li>后序遍历: 2 3 - 4 5 + *</li>
+</ul>
+<p>中序遍历就是我们平时使用的中缀表达式，更接近人的思维，但是会有歧义，比如原来式子的括号没了，所以一般都是将表达式转换成后缀表达式或者前缀表达式进行计算，这也是之前自己使用两个栈转换实现后缀表达式计算结果的方式</p>
+<p>上面说到了使用后缀表达式无法加速计算逻辑表达式结果（四则表达式也无法加速，因为他们都需要全部计算完成才能知道结果）</p>
+<p>如果我们使用二叉树的话（能解决括号冲突的前提下），便可以通过剪枝进行加速得出结果，比如下图所示，我们在得出 a&amp;b 的结果之后，如果为true，那么便不用计算右子树的结果，便实现了剪枝加速（但是仅限于逻辑表达式计算，四则计算不可以，因为四则计算需要计算所有的结果，不能剪枝）</p>
+<p><img src="http://pvx5csxk4.bkt.clouddn.com/%E9%80%BB%E8%BE%91%E4%BA%8C%E5%8F%89%E6%A0%91.png" alt="avatar"></p>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><p>Go语言实现起来比较简单，只需要重写AST的 walk方法使用的visitor就可以了，java实现起来略微繁琐，需要引入eclipse的JDT包再进行修改，调用起来略繁琐，自己也尝试了下，虽然也有重写visitor的方式，用起来也不是那么方便，参考文档也偏少，而且只为了计算一个逻辑表达式引入这一个包确实有点夸张，想了一下，决定还是自己手动实现AST的这个解析操作吧(终于不再做掉包侠？)</p>
+<h3 id="四则表达式计算结果"><a href="#四则表达式计算结果" class="headerlink" title="四则表达式计算结果"></a>四则表达式计算结果</h3><p>和上一个demo一样，这次也是先写了四则表达式计算的demo，然后在四则的基础上进行修改使得支持逻辑表达式</p>
+<p>原理主要参考了一个知乎专栏的一个博主（<a href="https://zhuanlan.zhihu.com/hinus" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/hinus</a>）：</p>
+<h4 id="自顶向下拆分化简问题"><a href="#自顶向下拆分化简问题" class="headerlink" title="自顶向下拆分化简问题"></a>自顶向下拆分化简问题</h4><p>自顶向下将任务进行分解，最顶部的任务，算一个表达式。一个表达式，也就是多项式，它是由每个项求和（差与和的原理一样，为了描述方便，只说和的情况）得到的。可以简化一个expression为 <code>expression := term + expression</code> 等式右边的 expression 是一个比左边的原始expression规模更小的一个表达式。举例，2 + 3 <em>４ + 5，可以把这个式子看成 2 与 “3</em>4+5” 的求和。其中，2是一个term，”3*4 + 5” 是一个规模更小的 expression。</p>
+<p>同样，拆分 term。term 可以看成是多个因子的积。按上面的方法，可以这样化简 term 的规模：</p>
+<p>  <code>term := factor * term</code></p>
+<p>然后factor的定义为：</p>
+<p>  <code>facotr := int | (expression)</code></p>
+<p>左边的term是一个规模比较大的积，而右边的term的规模比左边的小1，我们可以把这个化简一直执行下去。直到term全部变成factor的积</p>
+<p>为了加快拆解子问题的速度，避免太大深度的递归调用，最后定义如下：<br><code>expr := term (+|-) term (+|-) ... (+|-) term</code><br><code>term := factor (*|/) factor (* | /) ... (*|/) factor</code><br><code>factor := int | negative number | &quot;(&quot; expr &quot;)&quot;</code></p>
+<h4 id="详细代码"><a href="#详细代码" class="headerlink" title="详细代码"></a>详细代码</h4><p>四则运算的详细代码见<a href="https://github.com/YangAidi/expression" target="_blank" rel="noopener">https://github.com/YangAidi/expression</a></p>
+<h3 id="逻辑表达式计算结果"><a href="#逻辑表达式计算结果" class="headerlink" title="逻辑表达式计算结果"></a>逻辑表达式计算结果</h3><p>逻辑表达式计算相对简单，也是在上面的思想上面进行简化，表达式变成了</p>
+<p><code>expression := factor ( AND | OR ) expression</code><br><code>facotr := bolean | NOT | (expression)</code></p>
+<p>首先创建一颗空树，将expression返回的结果赋值为根节点，expression代码如下，主要负责 将多个子expression连接起来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public LogicNode expression() &#123;</span><br><span class="line">    LogicNode left = factor();</span><br><span class="line">    while (chars.length &gt; index &amp;&amp; (chars[index] == AND ||          chars[index] == OR)) &#123;</span><br><span class="line">        if (match(OR)) &#123;</span><br><span class="line">        LogicNode root = new LogicNode(OR);</span><br><span class="line">        root.left = left;</span><br><span class="line">        root.right = factor();</span><br><span class="line">        left = root;</span><br><span class="line">        &#125; else if (match(AND)) &#123;</span><br><span class="line">        LogicNode root = new LogicNode(AND);</span><br><span class="line">        root.left = left;</span><br><span class="line">        root.right = factor();</span><br><span class="line">        left = root;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return left;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>factor的主要代码如下，负责计算某一个子expression的结果，或者括号内的结果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">private LogicNode factor() &#123;</span><br><span class="line">    char c;</span><br><span class="line">    try &#123;</span><br><span class="line">        c = chars[index];</span><br><span class="line">        if (match(LPAR)) &#123;</span><br><span class="line">        LogicNode v = expression();</span><br><span class="line">        if (!match(RPAR)) &#123;</span><br><span class="line">            throw new Exception(&quot;Illegal Expression!&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        return v;</span><br><span class="line">        &#125; else if (c &gt;= &apos;A&apos; &amp;&amp; c &lt;= &apos;z&apos;) &#123;</span><br><span class="line">        ++index;</span><br><span class="line">        return new LogicNode(c);</span><br><span class="line">        &#125; else if (match(NOT)) &#123;</span><br><span class="line">        // 非的生成逻辑</span><br><span class="line">        LogicNode v = new LogicNode(c);</span><br><span class="line">        LogicNode root = new LogicNode(NOT);</span><br><span class="line">        root.left = v;</span><br><span class="line">        root.right = factor();</span><br><span class="line">        return root;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">        throw new Exception(&quot;Illegal Expression!&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">  // should not reach here</span><br><span class="line">  return null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>执行过程中的匹配函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">private boolean match(char c) &#123;</span><br><span class="line">    if (chars[index] == (c)) &#123;</span><br><span class="line">    ++index;</span><br><span class="line">    return true;</span><br><span class="line">   &#125;</span><br><span class="line">  return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>得到这个表达式对应的二叉树之后，进行中序遍历即可得出结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">public static boolean postOrder(LogicNode n) &#123;</span><br><span class="line">    boolean l = false;</span><br><span class="line">    boolean r = false;</span><br><span class="line">    if (n.left != null) &#123;</span><br><span class="line">        l = postOrder(n.left);</span><br><span class="line">        // 短路优化</span><br><span class="line">        if (!l &amp;&amp; n.data == AND) &#123;</span><br><span class="line">        return false;</span><br><span class="line">     &#125;</span><br><span class="line">    if (l &amp;&amp; n.data == OR) &#123;</span><br><span class="line">    return true;</span><br><span class="line">    &#125;</span><br><span class="line">   &#125;</span><br><span class="line">  if (n.right != null) &#123;</span><br><span class="line">    r = postOrder(n.right);</span><br><span class="line">  &#125;</span><br><span class="line">  switch (n.data) &#123;</span><br><span class="line">    case AND:</span><br><span class="line">        return l &amp;&amp; r;</span><br><span class="line">    case OR:</span><br><span class="line">        return l || r;</span><br><span class="line">    case NOT:</span><br><span class="line">        // not的实现方法需要特别注意</span><br><span class="line">        return !r;</span><br><span class="line">    default:</span><br><span class="line">        // 获取每一个字母代表的值</span><br><span class="line">        return n.data == &apos;a&apos;;</span><br><span class="line">    &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><p>在实现四则运算的过程中，存储数据的二叉树的Node节点如何定义是个很坑的事儿，本来想的是只设置一个data域，然后data域char类型，但是这样就会出现的问题是只能做10以内的运算，而且要注意char的ASCII码和实际数字的偏差。后来想data改成String，这样就不用考虑char到int的转换了，但是改了之后问题更多了，每一步都会遇到类型转换的问题，特别是在进行二叉树遍历的时候，极其繁琐<br>最后，决定增加一个type字段，用来区分，type类型有INT，PLUS，MINUS等，但是只有INT有data域，代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public class Node &#123;</span><br><span class="line">    public int data;</span><br><span class="line">    public Node left;</span><br><span class="line">    public Node right;</span><br><span class="line">    public char type;</span><br><span class="line">    public Node(int d, char type) &#123;</span><br><span class="line">    this.type = type;</span><br><span class="line">    // 注意这个小细节</span><br><span class="line">    this.data = d - 48;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">public Node(char type) &#123;</span><br><span class="line">    this.type = type;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>逻辑表达式不存在这个问题，直接使用一个char字段就可以解决了</p>
+<h3 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h3><p>个人观点也是不鼓励造轮子，在探寻现成方案的过程中，自己也发现了一个不错的开源方案，支持各种表达式计算，不仅仅是四则运算和逻辑表达式（<a href="http://mathparser.org/mxparser-tutorial/" target="_blank" rel="noopener">http://mathparser.org/mxparser-tutorial/</a>），以后有后续需求可以引入这个方案，但是考虑到目前自己只有一个逻辑表达式计算，所以还是自己造了这个轮子，也是对自己的一个锻炼吧</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/Java/" rel="tag"># Java</a>
+            
+              <a href="/tags/算法/" rel="tag"># 算法</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2019/06/06/记一次flink处理kafka消息时的周期性堆积问题/" rel="next" title="记一次flink处理kafka消息时的周期性堆积问题">
+                  <i class="fa fa-chevron-left"></i> 记一次flink处理kafka消息时的周期性堆积问题
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨爱迪</p>
+  <div class="site-description motion-element" itemprop="description">aidi@pku.edu.cn</div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/YangAidi" title="GitHub &rarr; https://github.com/YangAidi" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#原来的后缀表达式计算方式"><span class="nav-number">1.</span> <span class="nav-text">原来的后缀表达式计算方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用AST（抽象语法树）进行剪枝加速"><span class="nav-number">2.</span> <span class="nav-text">使用AST（抽象语法树）进行剪枝加速</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二叉树剪枝加速原理"><span class="nav-number">3.</span> <span class="nav-text">二叉树剪枝加速原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码实现"><span class="nav-number">4.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四则表达式计算结果"><span class="nav-number">5.</span> <span class="nav-text">四则表达式计算结果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#自顶向下拆分化简问题"><span class="nav-number">5.1.</span> <span class="nav-text">自顶向下拆分化简问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#详细代码"><span class="nav-number">5.2.</span> <span class="nav-text">详细代码</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#逻辑表达式计算结果"><span class="nav-number">6.</span> <span class="nav-text">逻辑表达式计算结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#注意事项"><span class="nav-number">7.</span> <span class="nav-text">注意事项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#后记"><span class="nav-number">8.</span> <span class="nav-text">后记</span></a></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨爱迪</span>
+</div>
+<span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+<span id="busuanzi_container_site_uv">
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+<script src="/js/utils.js?v=7.3.0"></script>
+  <script src="/js/motion.js?v=7.3.0"></script>
+
+
+  <script src="/js/affix.js?v=7.3.0"></script>
+  <script src="/js/schemes/pisces.js?v=7.3.0"></script>
+
+
+<script src="/js/next-boot.js?v=7.3.0"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  <script>
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var $visitors = $('.leancloud_visitors');
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            
+            Counter('put', '/classes/Counter/' + counter.objectId, JSON.stringify({ time: { '__op': 'Increment', 'amount': 1 } }))
+              .fail(function ({ responseJSON }) {
+                console.log(`Failed to save Visitor num, with error message: ${responseJSON.error}`);
+              })
+          } else {
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1 }))
+                .done(function() {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function() {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var entries = [];
+      var $visitors = $('.leancloud_visitors');
+
+      $visitors.each(function() {
+        entries.push( $(this).attr('id').trim() );
+      });
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url: { '$in': entries } }) })
+        .done(function({ results }) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.url;
+            var time = item.time;
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for (var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if (countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  }
+
+  $(function() {
+    $.get('https://app-router.leancloud.cn/2/route?appId=' + 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz')
+      .done(function({ api_server }) {
+        var Counter = function(method, url, data) {
+          return $.ajax({
+            method: method,
+            url: `https://${api_server}/1.1${url}`,
+            headers: {
+              'X-LC-Id': 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+              'X-LC-Key': 'enB6iR4fNOYLktExCbGuw41S',
+              'Content-Type': 'application/json',
+            },
+            data: data
+          });
+        };
+        if (CONFIG.page.isPost) {
+          const localhost = /http:\/\/(localhost|127.0.0.1|0.0.0.0)/;
+          if (localhost.test(document.URL)) return;
+          addCount(Counter);
+        } else {
+          if ($('.post-title-link').length >= 1) {
+            showTime(Counter);
+          }
+        }
+      });
+  });
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+  
+  <script src="/js/scrollspy.js?v=7.3.0"></script>
+<script src="/js/post-details.js?v=7.3.0"></script>
+
+
+    
+
+<script>
+NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', function() {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail,link';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+    appKey: 'enB6iR4fNOYLktExCbGuw41S',
+    placeholder: '在此输入您的留言',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+
+</body>
+</html>
