@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="generator" content="Hexo 3.8.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico?v=7.3.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico?v=7.3.0">
+  <link rel="mask-icon" href="/favicon.ico?v=7.3.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.3.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    save_scroll: false,
+    copycode: {"enable":false,"show_result":false,"style":null},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    }
+  };
+</script>
+
+  <meta name="description" content="在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降？这个不合逻辑的结果究竟是flink窗口机制问题还是自己的代码逻辑问题？">
+<meta name="keywords" content="flink">
+<meta property="og:type" content="article">
+<meta property="og:title" content="keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析">
+<meta property="og:url" content="http://yangaidi.com/2019/07/01/keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析/index.html">
+<meta property="og:site_name" content="这是id啊">
+<meta property="og:description" content="在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降？这个不合逻辑的结果究竟是flink窗口机制问题还是自己的代码逻辑问题？">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C.png">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E5%87%BA%E7%8E%B0%E5%80%BE%E6%96%9C.png">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E7%BA%BF%E4%B8%8A%E5%80%BE%E6%96%9C.png">
+<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/hash%E5%9B%BE.jpg">
+<meta property="og:updated_time" content="2019-08-09T17:20:00.748Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析">
+<meta name="twitter:description" content="在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降？这个不合逻辑的结果究竟是flink窗口机制问题还是自己的代码逻辑问题？">
+<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg">
+  <link rel="canonical" href="http://yangaidi.com/2019/07/01/keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析 | 这是id啊</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  <div class="container sidebar-position-left">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">这是id啊</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">杨爱迪以后要坚持写博客啊！</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-categories">
+      
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-about">
+      
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content page-post-detail">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yangaidi.com/2019/07/01/keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="杨爱迪">
+      <meta itemprop="description" content="aidi@pku.edu.cn">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="这是id啊">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析
+
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-07-01 23:56:48" itemprop="dateCreated datePublished" datetime="2019-07-01T23:56:48+08:00">2019-07-01</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-08-10 01:20:00" itemprop="dateModified" datetime="2019-08-10T01:20:00+08:00">2019-08-10</time>
+              </span>
+            
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/flink/" itemprop="url" rel="index"><span itemprop="name">flink</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            <span id="/2019/07/01/keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析/" class="post-meta-item leancloud_visitors" data-flag-title="keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+          
+            
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="fa fa-comment-o"></i>
+      </span>
+        
+      
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/07/01/keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析/#comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/07/01/keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+          
+
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降？这个不合逻辑的结果究竟是flink窗口机制问题还是自己的代码逻辑问题？<br><a id="more"></a></p>
+<p>这个算是自己项目的一个debug过程，前面大部分都是和项目相关的，结论可以从第六部分「问题分析」部分</p>
+<h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>这一周在项目的性能测试，每一条规则是keyBy分组的键（准确的说是主要组成部分） 然后发现这两次测试都出现了一个意料之外的问题，就是将<strong>n个只含有1个指标的规则</strong>合并成<strong>一个含有n个指标的规则之后</strong>，效率并没有像预期中的提高n倍，不能提高n倍也就算了，甚至连原有效率高都没有，一条规则含有的指标越多效率越低，最后不到原有效率的十分之一。更残酷的是在这个支持多个指标聚合的代码上面，不开启多个指标而依然使用原先的一个规则一个指标，效率完全没有降低，甚至还比旧代码的一个规则一个指标快了1.5倍左右。sad</p>
+<p><img src="http://pvx5csxk4.bkt.clouddn.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg" alt="avatar"><br>CoFlatMap到window的流程就是上图所示，flatMap是业务逻辑，然后生成的数据根据指标进行分组分发到窗口</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>把问题抽象出来就是在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降，这不科学啊，让一个窗口处理更多的数据，减少了创建再聚合窗口的开销，效率不说会有质的飞跃，但是肯定不会下降啊，然而kafka不断堆积的数量，无情的打着脸。</p>
+<h3 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h3><h4 id="业务代码问题"><a href="#业务代码问题" class="headerlink" title="业务代码问题"></a>业务代码问题</h4><p>最初还是坚持keyBy分组减少不会影响窗口聚合效率的想法，首先怀疑是自己业务代码的问题，分析了下代码可能出现问题的两个地方是</p>
+<ol>
+<li><p>累加器问题<br>累加器acc嫌疑最大：因为在将多个指标合并成了一个指标后，累加器的数据结构变成了一个map，然后里面的每一个entry是原先的累加器，每次来一个数据，都需要去找到对应的entry，然后再对这个entry进行操作，如果发生累加器之间的merge，效率低到更是可怕。<br>但是又想了下，即使是一条规则一个指标，也会走这个过程，效率完全没有影响，而产生影响的只是指标特别长的时候，指标越长（多个指标直接用“,”连接拼接成一个新的指标），效率越低，累加器表示不背这个锅。不过死马当成活马医，改了再说，移除累加器的处理逻辑，果然没用，意料之中的失望，算是死了心</p>
+</li>
+<li><p>字符串过长问题<br>多个指标累加成了一个特别长的指标字符串，然后这个字符串作为key进行分类和过滤操作：在做这个需求方案的时候，自己还特意在生成的特别长的指标字符串这段代码处写了个 fixme 此处直接使用 contains会对效率造成影响道真的是因为这个contains背锅？</p>
+<ol>
+<li><p>代码中有两处使用了String.contains来过滤数据是否属于这个超长的指标，之前看String的源码的时候印象比较深，<strong> contains实现没有使用kmp！contains实现没有使用kmp！contains实现没有使用kmp！</strong>就是暴力的两层循环去比较，那我这60个指标的字符串加起来有1000个字符了吧，难道瓶颈在这里？</p>
+<ul>
+<li>第一处contains之前的一个周末“闲着没事儿”已经使用Set进行了取代，变成了Set.contains，看了下HashSet的源码，发现底层是HashMap实现的，那contains操作肯定没有问题了，直接使用的字符串的hashCode进行比较，效率不会有问题，O(1)，与字符串长度无关</li>
+<li><p>第二处因为牵涉的地方比较多，当时没有用Set做优化，所以直接使用的contains，这样的话就有可能会出现从1000个字符里面找一个50的字符是否存在，emm，看起来对效率影响挺大的。那究竟有多大影响？自己写了个测试的代码检测调用含有这个contains的函数10000次，看平均耗时是多久</p>
+<ol>
+<li><p>含有1个指标的被匹配字符串的长度大概是20左右，过来的数据大概也是20左右，测试了下，整个函数耗时大概维持在5毫秒左右</p>
+</li>
+<li><p>含有60个指标的被匹配字符串的长度大概是1000左右，过来的数据20左右，耗时维持在6-7毫秒”</p>
+<p>这，确实有差距，不过这个20%是不是差的太少了点，线上测试的效率差了十倍呢！依旧不死心，干脆来一次污点证人，我把上面那个1000的字符串改成长度10000试试，果然，耗时变成了30毫秒！！！好的就是你了，就是这个contains的锅，来，把这句代码注释掉，部署到服务器上测试一下，然后，结果并没有任何变化，强行甩锅还是不行啊</p>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>会不会因为拿这个特别特别长的字符串当key的时候，flink各个算子之间进行计算key是否匹配的时候运算特别变复杂了呢？不会！一般java内key对比都是和HashMap一样使用hashCode了，除非flink官方在故意挖坑？不过看了下，也并没有什么坑（有坑的话也早就被人拉出来鞭尸了）</p>
+</li>
+<li><p>字符串变长了造成网络传输负载？这个确实是影响因素，但肯定没有这么大，一下子降低了十倍的效率</p>
+</li>
+<li><p>开始寻找各种边边角角的小问题，比如有些变量使用transient修饰有的没有，各种瞎调试，最后亦无所终</p>
+</li>
+</ol>
+</li>
+</ol>
+<h4 id="flink的窗口聚合机制问题"><a href="#flink的窗口聚合机制问题" class="headerlink" title="flink的窗口聚合机制问题"></a>flink的窗口聚合机制问题</h4><p>业务上代码没问题，难道真的就是因为keyBy分组键减少导致效率降低？尽管不愿意承认这个事实，我还是试试吧</p>
+<ul>
+<li>将聚合合窗口window上游的CoFlatMap节点中的<code>collector.collect();</code>注释掉，也就是说说不给window聚合窗口发送任何消息，来判断是不是window的锅效率恢复正常了，效率恢复正常了，效率恢复正常了！<br>尽管不愿意承认，但就是window的锅</li>
+<li><p>又补充做了一次测试，就是移除掉window聚合函数的所有逻辑，也就是说让window仅仅接收数据，但是不计算，结果依旧，效率极低，所以是因为window接收了太多的数据的原因无疑了</p>
+<p>  开始思考为什么会出现这个问题，数据总量相同，减少窗口数，增加每一个窗口处理的数据量，效率会急剧下降，很是不可思议，然而所有的锅都指向了它，思考了可能的原因</p>
+<ul>
+<li>数据太大了，窗口放不下，可能一个窗口的大小有限制？但是查询了好久没有找到原因</li>
+<li>可能是flink的window聚合机制哪里有坑需要自己去探索</li>
+</ul>
+</li>
+</ul>
+<h3 id="暂时处理方案"><a href="#暂时处理方案" class="headerlink" title="暂时处理方案"></a>暂时处理方案</h3><ol>
+<li>问题还是没有解决但是需求还是必须要做出来啊，后来根据业务需求做了一下简单的测试(业务一般都是3-4个指标（keyBy字段）合成一个)，所以自己测试了下当执行3-4个聚合的效率，影响不大还可以接受</li>
+<li>为了以防万一，想了个兜底方案<br>如果确实因为keyBy字段过长造成了效率极低，无法上线的话，那keyBy逻辑做一下更改，先使用原有的方式，使用单个的keyBy字段先做一次聚合，然后再将聚合结果二次聚合</li>
+</ol>
+<h3 id="峰回路转"><a href="#峰回路转" class="headerlink" title="峰回路转"></a>峰回路转</h3><h4 id="OOM问题"><a href="#OOM问题" class="headerlink" title="OOM问题"></a>OOM问题</h4><ul>
+<li><p>暂时搁置了这个问题去继续推进业务，然后又一个新的问题出现了，发现自己的flink工程在开8个窗口同时聚合的时候总是10min就宕机一次然后重启，后来找了同事核实了下，是因为OOM的原因，把分配的内存从2G变成了4G之后就没有问题了（这也侧向说明了上面那个想法确实是有一定道理的flink的window聚合的数 据越多，占用的内存越大，当然这也是一句废话）</p>
+</li>
+<li><p>在与其他同事聊了下，原因可能是因为自己的window太多了导致的，然后同事说了句话每个key都有自己的状态，让我看看我自己的key的数量，emm？这好像和我上面得出的结论冲突啊！我上面得出的结论是<strong>key太少了导致了我的工程效率太低</strong>，但是同事的言下之意是key越多需要维护的状态越多效率越低，自己赞成这个观点，但是我的代码“不赞成”啊</p>
+</li>
+</ul>
+<h4 id="数据倾斜问题"><a href="#数据倾斜问题" class="headerlink" title="数据倾斜问题"></a>数据倾斜问题</h4><p>赶紧请教一下我出现的这个问题，大佬反问我<strong>你看到在key少的时候 subtask 的输入数据是均匀的吗</strong>？</p>
+<ul>
+<li><p>是均匀的吗？我之前看kafka读取数据的时候30个节点都是均匀的啊，然后kafka到CoFlatMap模块使用的是rescale模式，也是均匀的啊（关于这部分可以参考下『<a href="/2019/05/24/flink消费kafka时出现数据倾斜的原因和处理方式/">flink消费kafka时出现数据倾斜的原因和处理方式</a>』）</p>
+</li>
+<li><p>而且我的所有的subtask的backPressure值都是很高，或者全部都是0的情况，并没有出现那种有的backPressure很高有的很低这种数据倾斜现象，所以我认定自己的subtask应该是输入数据均匀的</p>
+</li>
+<li><p>但是总是感觉“没有实践就没有发言权”，我还是去实际测试一下看看吧</p>
+<ul>
+<li><p>先看一下CoFlatMap模块的subtask，没问题，大致是均匀的，因为这个问题上次已经通过rescale解决了<br><img src="http://pvx5csxk4.bkt.clouddn.com/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
+</li>
+<li><p>再看一下window聚合的subtask，woc，真的有数据倾斜，数据差值最多的能差到上百倍<br><img src="http://pvx5csxk4.bkt.clouddn.com/%E5%87%BA%E7%8E%B0%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
+</li>
+<li><p>为什么会这样，不科学啊，之前看到的所有的backPressure的值全部都是0.8到0.9啊，赶紧再次去核实一下，所有的CoFlatMap的backPressure值都是0.8左右，都是很高的负载，没有数据倾斜的征兆</p>
+</li>
+<li><p>看了下所有的window的subtask的backPressure值都是0</p>
+</li>
+<li><p>数据倾斜问题这么严重？那我们线上代码怎么运行这么久的，赶紧去看一下线上的代码，线上代码果然也存在数据倾斜的问题，最多的能差到10倍左右！！！<br><img src="http://pvx5csxk4.bkt.clouddn.com/%E7%BA%BF%E4%B8%8A%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
+<p>大致原因是找到了，应该就是数据倾斜的问题，可是为什么会这样啊，这个数据倾斜产生的很离奇啊，而且线上也有倾斜却没有问题，自己的工程却性能降到原来的十分之一！</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h3><h4 id="两个疑惑"><a href="#两个疑惑" class="headerlink" title="两个疑惑"></a>两个疑惑</h4><p>整理一下两个存在疑惑的地方：</p>
+<ol>
+<li><p>CoFlatMap模块的所有subtask的backPressure值都很高，都是0.8左右，但是他们的下游却产生了数据倾斜（这个是误导自己认为负载是均衡的罪魁祸首，所以也没有往这个方面考虑）</p>
+</li>
+<li><p>线上代码运行了那么久都没有问题，自己这个却直接挂掉了，还有就是自己的倾斜幅度达到了100倍（挂掉的原因其实也是因为这个了）</p>
+</li>
+</ol>
+<h4 id="疑惑1的分析"><a href="#疑惑1的分析" class="headerlink" title="疑惑1的分析"></a>疑惑1的分析</h4><p>再次掏出了整个程序的拓扑图<br><img src="http://pvx5csxk4.bkt.clouddn.com/hash%E5%9B%BE.jpg" alt="avatar"></p>
+<p>模块1是kafka读取模块，模块2是CoFlatMap模块，模块3是窗口聚合模块，程序运行的时候</p>
+<ol>
+<li>kafka模块无数据倾斜，因为是一个分区对应一个subtask，所有的subtask的backPressure都是0.9+</li>
+<li>CoFlatMap模块无数据倾斜，因为上游kafka模块式通过rescale方式发送的消息，所有的subtask的backPressure都是0.8+</li>
+</ol>
+<p>这次再补充一下backPressure的知识（<a href="/2019/05/21/如何利用backPressure接口来监控服务器当前的负载情况/">如何利用backPressure接口来监控服务器当前的负载情况</a>），其实也是自己之前忽视的一点</p>
+<ol>
+<li>一个模块的backPressure值代表的是下游模块的消费能力（可以理解为下游的负载情况）</li>
+<li>下游模块不断地消费上游模块的buff pool，如果下游负载太高就不会消费这个buffer pool，等buffer pool满了之后，上游的subtask就回阻塞在向buffer 写数据上面，所以backPressure监控的实质是上游模块给下游发送消息的buffer pool的情况</li>
+</ol>
+<p>回到本项目中就是，模块2的所有backPressure值都是0.8+，负载很高，这就说明”所有的模块3的subtask负载都很高?”就是因为之前认为的理所当然，才没有去考虑这个情况的发生。</p>
+<p>仔细看模块2和模块3之间的数据分发方式是Hash而不是像模块1和2之间采用的rescale，这其实是flink的机制所限，因为3是窗口聚合模块，接收的是模块2keyBy分组之后的数据，所以必须保证同一个key的数据分发到同一个窗口的subtask中，所以这里直接使用的是key的hash值进行分组分发</p>
+<p>那为什么所有的模块2的backPressure都是0.8+呢？<br>当我知道这个地方使用的是hash之后就大概得出了原因，就是在模块2，所有的数据可以认为是均衡的，所有的数据都有可能发送给下游window窗口中的每一个subtask，<strong>如果下游其中一个subtask负载极高，就会导致他应当消费的buffer pool的消息没有及时处理，这样就会导致整个buffer pool里面存储的都是这一个热点节点的待处理消息，也就导致了整个工程的瓶颈都卡在了这一个热点节点</strong></p>
+<ol>
+<li><p>整个工程的瓶颈都卡在了这一个热点节点</p>
+</li>
+<li><p>整个工程的瓶颈都卡在了这一个热点节点</p>
+</li>
+<li>整个工程的瓶颈都卡在了这一个热点节点</li>
+</ol>
+<h4 id="疑惑2的分析"><a href="#疑惑2的分析" class="headerlink" title="疑惑2的分析"></a>疑惑2的分析</h4><p>这个就是比较接近业务的了一个问题了<br>当我们设置过滤规则的时候，如果有一些规则会聚合很多的数据，比如一个聚合规则是『计算所有的服务器的cpu.idle均值』，那么这个分组的key就是消息的指标=cpu.idle，flink一定会保证同一个key的数据分发到同一个窗口的subtask中，这样就会出现一个窗口会接收公司所有的服务器的的cpu.idle值的数据，而整个工程的瓶颈也都会卡在了这一个窗口上面</p>
+<p>我们线上目前跑的代码并没有出现负载瓶颈的原因主要有两个原因：</p>
+<ol>
+<li>规则聚合的数据量比较小，不会出现『计算所有的服务器的cpu.idle均值』这种暴力的规则</li>
+<li>线上启动了120个slot处理数据，而我测试的时候指启动了30个slot进行处理，单slot、总slot的计算能力远远大于负载最大的窗口的处理能力，所以即使线上最大存在着10倍的数据倾斜也没有出现严重的问题<br>测试代码频繁遇到瓶颈的问题：</li>
+<li>我的规则太暴力了，我写的那一条规则是【计算每个project的cpu.idle、cpu.user、memor.free等60个基础指标的一分钟均值】，这样就会导致，如果某个<br>project的设备特别多比如有1000台，那么就会将这1000台设备的这60个统计指标都发送到这个窗口，最后这一个窗口又会反压上游，最终导致整个工程扑街</li>
+<li>slot数量过少也会有一定影响，因为我只开了30个，所以更加加重了某些热点window被分配同一个slot中的概率，如果两个热点window，那处理效率就更下降了</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ol>
+<li>数据倾斜问题特别容易出现，特别是如果keyBy选择不当的话出现数据倾斜，造成一些window成为热点节点，成为整个工程的瓶颈</li>
+<li>对于一些被动产生的数据倾斜，比如业务上需要聚合公司所有服务器的一些数据，这些数据终归会汇总到一台机器上，那么就只能另辟蹊径了，比如采用多级window聚合，避免一个window处理数据过多的情况</li>
+<li>backPressure正如他的名字一样，是反压，不是代表当前节点的负载情况，而是他的下游节点”</li>
+</ol>
+<h3 id="反思"><a href="#反思" class="headerlink" title="反思"></a>反思</h3><p>这次因为这个问题整整卡了两天进度，想了下有很多值得反思的地方</p>
+<h4 id="先说优点夸夸自己吧"><a href="#先说优点夸夸自己吧" class="headerlink" title="先说优点夸夸自己吧"></a>先说优点夸夸自己吧</h4><p>经历了多次bug的折磨，现在debug的时候比以前想的更全面周到了，比如这次问题出现之后，没有急着去看代码可能存在的点就疯狂改，而是自己先做了一个规划，先定位可能出现问题的点，是CoFlatMap模块的问题还是window模块的问题，然后再在每一个模块内部可能存在的问题再做一个一个分析，然后统一列出来，最后再针对这些问题做相对应的更改（排除每一个影响因素），最终定位出了问题</p>
+<h4 id="说缺点"><a href="#说缺点" class="headerlink" title="说缺点"></a>说缺点</h4><ol>
+<li>菜是原罪。比如这个反常的悖论出现之后，自己列了一大堆””有的没的可能的原因””，对，说的就是优点的那些列出来的问题，然后做了好多前文赘述的测试，过了好久才找到真正的原因，window负载太大，然后就手足无措了不知道下一步做什么了。在和一些资深从业者聊天时，别人听几句你的描述，就能知道你可能出现的问题，这点还是不得不承认的，差距确实存在，以后继续努力吧</li>
+<li>虽然现在debug的时候知道了先去全局思考可能出现的问题，列出来影响因素，然后按照『控制变量法』去一个一个排除，但是有时候遇到意料之外的情况，自己还是会手足无措的情况，然后又陷入了无计划疯狂『魔改』代码的不归路，期望着靠加一行减一行代码就拯救世界的剧情，最后浪费了很长的时间还没有解决问题。平心静气，平心静气，先想好计划，再『魔改』代码。</li>
+</ol>
+<p>虽然最后问题并没有解决，但是知道了问题的原因，可以从业务层面进行控制，尽量不让这种情况出现</p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/flink/" rel="tag"># flink</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2019/06/20/使用二叉树剪枝加速计算逻辑表达式结果/" rel="next" title="使用二叉树剪枝加速计算逻辑表达式结果">
+                  <i class="fa fa-chevron-left"></i> 使用二叉树剪枝加速计算逻辑表达式结果
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+    
+    <div class="comments" id="comments"></div>
+  
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">杨爱迪</p>
+  <div class="site-description motion-element" itemprop="description">aidi@pku.edu.cn</div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-categories">
+        
+          
+            <a href="/categories/">
+          
+        
+        
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+      
+      
+        
+      
+      
+        
+      
+        <a href="https://github.com/YangAidi" title="GitHub &rarr; https://github.com/YangAidi" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+    
+  </div>
+
+
+
+        </div>
+      </div>
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#问题"><span class="nav-number">2.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#问题定位"><span class="nav-number">3.</span> <span class="nav-text">问题定位</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#业务代码问题"><span class="nav-number">3.1.</span> <span class="nav-text">业务代码问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#flink的窗口聚合机制问题"><span class="nav-number">3.2.</span> <span class="nav-text">flink的窗口聚合机制问题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#暂时处理方案"><span class="nav-number">4.</span> <span class="nav-text">暂时处理方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#峰回路转"><span class="nav-number">5.</span> <span class="nav-text">峰回路转</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#OOM问题"><span class="nav-number">5.1.</span> <span class="nav-text">OOM问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数据倾斜问题"><span class="nav-number">5.2.</span> <span class="nav-text">数据倾斜问题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#问题分析"><span class="nav-number">6.</span> <span class="nav-text">问题分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#两个疑惑"><span class="nav-number">6.1.</span> <span class="nav-text">两个疑惑</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#疑惑1的分析"><span class="nav-number">6.2.</span> <span class="nav-text">疑惑1的分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#疑惑2的分析"><span class="nav-number">6.3.</span> <span class="nav-text">疑惑2的分析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#反思"><span class="nav-number">8.</span> <span class="nav-text">反思</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#先说优点夸夸自己吧"><span class="nav-number">8.1.</span> <span class="nav-text">先说优点夸夸自己吧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#说缺点"><span class="nav-number">8.2.</span> <span class="nav-text">说缺点</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨爱迪</span>
+</div>
+<span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+<span id="busuanzi_container_site_uv">
+  本站访客数<span id="busuanzi_value_site_uv"></span>人次
+</span>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+      </div>
+
+    
+
+  </div>
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+<script src="/js/utils.js?v=7.3.0"></script>
+  <script src="/js/motion.js?v=7.3.0"></script>
+
+
+  <script src="/js/affix.js?v=7.3.0"></script>
+  <script src="/js/schemes/pisces.js?v=7.3.0"></script>
+
+
+<script src="/js/next-boot.js?v=7.3.0"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+  <script>
+  if (CONFIG.page.isPost) {
+    function addCount(Counter) {
+      var $visitors = $('.leancloud_visitors');
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url }) })
+        .done(function({ results }) {
+          if (results.length > 0) {
+            var counter = results[0];
+              var $element = $(document.getElementById(url));
+              $element.find('.leancloud-visitors-count').text(counter.time + 1);
+            
+            Counter('put', '/classes/Counter/' + counter.objectId, JSON.stringify({ time: { '__op': 'Increment', 'amount': 1 } }))
+              .fail(function ({ responseJSON }) {
+                console.log(`Failed to save Visitor num, with error message: ${responseJSON.error}`);
+              })
+          } else {
+              Counter('post', '/classes/Counter', JSON.stringify({ title: title, url: url, time: 1 }))
+                .done(function() {
+                  var $element = $(document.getElementById(url));
+                  $element.find('.leancloud-visitors-count').text(1);
+                })
+                .fail(function() {
+                  console.log('Failed to create');
+                });
+            
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  } else {
+    function showTime(Counter) {
+      var entries = [];
+      var $visitors = $('.leancloud_visitors');
+
+      $visitors.each(function() {
+        entries.push( $(this).attr('id').trim() );
+      });
+
+      Counter('get', '/classes/Counter', { where: JSON.stringify({ url: { '$in': entries } }) })
+        .done(function({ results }) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.url;
+            var time = item.time;
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for (var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if (countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function ({ responseJSON }) {
+          console.log(`LeanCloud Counter Error: ${responseJSON.code} ${responseJSON.error}`);
+        });
+    }
+  }
+
+  $(function() {
+    $.get('https://app-router.leancloud.cn/2/route?appId=' + 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz')
+      .done(function({ api_server }) {
+        var Counter = function(method, url, data) {
+          return $.ajax({
+            method: method,
+            url: `https://${api_server}/1.1${url}`,
+            headers: {
+              'X-LC-Id': 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+              'X-LC-Key': 'enB6iR4fNOYLktExCbGuw41S',
+              'Content-Type': 'application/json',
+            },
+            data: data
+          });
+        };
+        if (CONFIG.page.isPost) {
+          const localhost = /http:\/\/(localhost|127.0.0.1|0.0.0.0)/;
+          if (localhost.test(document.URL)) return;
+          addCount(Counter);
+        } else {
+          if ($('.post-title-link').length >= 1) {
+            showTime(Counter);
+          }
+        }
+      });
+  });
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+  
+  <script src="/js/scrollspy.js?v=7.3.0"></script>
+<script src="/js/post-details.js?v=7.3.0"></script>
+
+
+    
+
+<script>
+NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', function() {
+  var GUEST = ['nick', 'mail', 'link'];
+  var guest = 'nick,mail,link';
+  guest = guest.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#comments',
+    verify: false,
+    notify: false,
+    appId: 'YTnbWBNooPbX0RQCWGJMuSsB-gzGzoHsz',
+    appKey: 'enB6iR4fNOYLktExCbGuw41S',
+    placeholder: '在此输入您的留言',
+    avatar: 'mm',
+    meta: guest,
+    pageSize: '10' || 10,
+    visitor: false,
+    lang: 'zh-cn' || 'zh-cn',
+    path: location.pathname
+  });
+}, window.Valine);
+</script>
+
+
+</body>
+</html>
