@@ -62,14 +62,14 @@
 <meta property="og:site_name" content="这是id啊">
 <meta property="og:description" content="最近在使用backPressure做性能上的压测，但是当并行数量从30提升到120的时候，服务的性能却没有任何的提升，初次搞大数据菜鸡再次陷入了绝望…">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/forward%E6%A8%A1%E5%BC%8F.jpg">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/kafak%E6%9E%B6%E6%9E%84.jpg">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/rescale.jpg">
-<meta property="og:updated_time" content="2019-08-09T05:19:44.958Z">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/forward%E6%A8%A1%E5%BC%8F.jpg">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/kafak%E6%9E%B6%E6%9E%84.jpg">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/rescale.jpg">
+<meta property="og:updated_time" content="2019-11-15T06:10:32.680Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="flink消费kafka时出现数据倾斜的原因和处理方式">
 <meta name="twitter:description" content="最近在使用backPressure做性能上的压测，但是当并行数量从30提升到120的时候，服务的性能却没有任何的提升，初次搞大数据菜鸡再次陷入了绝望…">
-<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/forward%E6%A8%A1%E5%BC%8F.jpg">
+<meta name="twitter:image" content="http://pic-test.xinshenwoyaoxue.com/forward%E6%A8%A1%E5%BC%8F.jpg">
   <link rel="canonical" href="http://yangaidi.com/2019/05/24/flink消费kafka时出现数据倾斜的原因和处理方式/">
 
 
@@ -281,7 +281,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-08-09 13:19:44" itemprop="dateModified" datetime="2019-08-09T13:19:44+08:00">2019-08-09</time>
+                <time title="修改时间：2019-11-15 14:10:32" itemprop="dateModified" datetime="2019-11-15T14:10:32+08:00">2019-11-15</time>
               </span>
             
           
@@ -358,7 +358,7 @@
 </li>
 <li><p>backPressure表示的不仅仅是当前节点的负载，同时也会受到下游节点影响，所以情况应该是出现在CoFlatMap节点，而CoFlatMap节点也是30个backPressure为1，90个完全闲置，那问题是不是出现CoFlatMap节点上面，之前不都是会自动Rebalance的吗，自己这样反问自己，但是当打开项目拓扑图之后，傻眼了</p>
 <ul>
-<li>仔细看了下拓扑图，发现自己的拓扑图中kafka source和CoFlatMap模式<br><img src="http://pvx5csxk4.bkt.clouddn.com/forward%E6%A8%A1%E5%BC%8F.jpg" alt="avatar"></li>
+<li>仔细看了下拓扑图，发现自己的拓扑图中kafka source和CoFlatMap模式<br><img src="http://pic-test.xinshenwoyaoxue.com/forward%E6%A8%A1%E5%BC%8F.jpg" alt="avatar"></li>
 <li>线上的，相同的代码确是Rebalance模式<br>看来问题就出现在这个地方，可是为什么相同的代码，我的就是forward模式，线上就是Rebalance模式？</li>
 </ul>
 </li>
@@ -398,7 +398,7 @@
 <ul>
 <li>消费者以组的名义订阅主题，主题有多个分区，消费者组中有多个消费者实例，那么消费者实例和分区之前的对应关系是怎样的呢？</li>
 </ul>
-<p><img src="http://pvx5csxk4.bkt.clouddn.com/kafak%E6%9E%B6%E6%9E%84.jpg" alt="avatar"><br>同一时刻，一条消息只能被组中的一个消费者实例消费消费者组订阅这个主题，意味着主题下的所有分区都会被组中的消费者消费到，如果按照从属关系来说的话就是，主题下的每个分区只从属于组中的一个消费者，不可能出现组中的两个消费者负责同一个分区。</p>
+<p><img src="http://pic-test.xinshenwoyaoxue.com/kafak%E6%9E%B6%E6%9E%84.jpg" alt="avatar"><br>同一时刻，一条消息只能被组中的一个消费者实例消费消费者组订阅这个主题，意味着主题下的所有分区都会被组中的消费者消费到，如果按照从属关系来说的话就是，主题下的每个分区只从属于组中的一个消费者，不可能出现组中的两个消费者负责同一个分区。</p>
 <ul>
 <li><p>那么，问题来了。如果分区数大于或者等于组中的消费者实例数，那自然没有什么问题，无非一个消费者会负责多个分区，（PS：当然，最理想的情况是二者数量相等，这样就相当于一个消费者负责一个分区）；但是，如果消费者实例的数量大于分区数，那么按照默认的策略（PS：之所以强调默认策略是因为你也可以自定义策略），有一些消费者是多余的，一直接不到消息而处于空闲状态。</p>
 </li>
@@ -418,7 +418,7 @@
 </li>
 <li><p>Rebalancing (Round-robin partitioning) 以round-robin方式对元素进行分区，使得每个分区负载均衡。在数据倾斜的情况下进行性能优化有用。”<br><code>dataStream.rebalance();</code></p>
 </li>
-<li><p>Rescaling 以round-robin方式对元素分区到下游operations。如果你想从source的每个并行实例分散到若干个mappers以负载均衡，但是你不期望rebalacne()那样进行全局负载均衡，这将会有用。这将仅需要本地数据传输，而不是通过网络传输数据，具体取决于其他配置值，例如TaskManager的插槽数。<br>上游operation所发送的元素被分区到下游operation的哪些子集，取决于上游和下游操作的并发度。例如，如果上游operation并发度为2，而下游operation并发度为6，则其中1个上游operation会将元素分发到3个下游operation，另1个上游operation会将元素分发到另外3个下游operation。相反地，如果上游operation并发度为6，而下游operation并发度为2，则其中3个上游operation会将元素分发到1个下游operation，另1个上游operation会将元素分发到另外1个下游operation。<br>在上下游operation的并行度不是彼此的倍数的情况下，下游operation对应的上游的operation输入数量不同。下图可视化了上面例子中说明的对应关系：<br><img src="http://pvx5csxk4.bkt.clouddn.com/rescale.jpg" alt="avatar"><br><code>dataStream.rescale();</code></p>
+<li><p>Rescaling 以round-robin方式对元素分区到下游operations。如果你想从source的每个并行实例分散到若干个mappers以负载均衡，但是你不期望rebalacne()那样进行全局负载均衡，这将会有用。这将仅需要本地数据传输，而不是通过网络传输数据，具体取决于其他配置值，例如TaskManager的插槽数。<br>上游operation所发送的元素被分区到下游operation的哪些子集，取决于上游和下游操作的并发度。例如，如果上游operation并发度为2，而下游operation并发度为6，则其中1个上游operation会将元素分发到3个下游operation，另1个上游operation会将元素分发到另外3个下游operation。相反地，如果上游operation并发度为6，而下游operation并发度为2，则其中3个上游operation会将元素分发到1个下游operation，另1个上游operation会将元素分发到另外1个下游operation。<br>在上下游operation的并行度不是彼此的倍数的情况下，下游operation对应的上游的operation输入数量不同。下图可视化了上面例子中说明的对应关系：<br><img src="http://pic-test.xinshenwoyaoxue.com/rescale.jpg" alt="avatar"><br><code>dataStream.rescale();</code></p>
 </li>
 <li><p>Broadcasting 广播元素到每个分区。”<br><code>dataStream.broadcast();</code><br>例如上游是5个并发，下游是10个并发。当使用Rebalance时，上游每个并发会轮询发给下游10个并发。当使用Rescale时，上游每个并发只需轮询发给下游2个并发。因为 channel个数变少了，subpartition的buffer填充速度能变快，能提高网络效率。当上游的数据比较均匀时，且上下游的并发数成比例时，可以使用Rescale替换Rebalance。参数：<code>enable.rescale.shuffling=true</code>，默认关闭。</p>
 </li>

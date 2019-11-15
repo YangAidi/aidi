@@ -62,16 +62,16 @@
 <meta property="og:site_name" content="这是id啊">
 <meta property="og:description" content="在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降？这个不合逻辑的结果究竟是flink窗口机制问题还是自己的代码逻辑问题？">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C.png">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E5%87%BA%E7%8E%B0%E5%80%BE%E6%96%9C.png">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/%E7%BA%BF%E4%B8%8A%E5%80%BE%E6%96%9C.png">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/hash%E5%9B%BE.jpg">
-<meta property="og:updated_time" content="2019-08-13T12:20:29.930Z">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C.png">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/%E5%87%BA%E7%8E%B0%E5%80%BE%E6%96%9C.png">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/%E7%BA%BF%E4%B8%8A%E5%80%BE%E6%96%9C.png">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/hash%E5%9B%BE.jpg">
+<meta property="og:updated_time" content="2019-11-15T06:07:09.349Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析">
 <meta name="twitter:description" content="在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降？这个不合逻辑的结果究竟是flink窗口机制问题还是自己的代码逻辑问题？">
-<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg">
+<meta name="twitter:image" content="http://pic-test.xinshenwoyaoxue.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg">
   <link rel="canonical" href="http://yangaidi.com/2019/07/01/keyBy分组键减少但效率却降低悖论——flink窗口聚合时数据倾斜分析/">
 
 
@@ -283,7 +283,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-08-13 20:20:29" itemprop="dateModified" datetime="2019-08-13T20:20:29+08:00">2019-08-13</time>
+                <time title="修改时间：2019-11-15 14:07:09" itemprop="dateModified" datetime="2019-11-15T14:07:09+08:00">2019-11-15</time>
               </span>
             
           
@@ -342,7 +342,7 @@
         <p>在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降？这个不合逻辑的结果究竟是flink窗口机制问题还是自己的代码逻辑问题？<br><a id="more"></a></p>
 <p>这个算是自己项目的一个debug过程，前面大部分都是和项目相关的，结论可以从第六部分「问题分析」部分</p>
 <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>这一周在项目的性能测试，每一条规则是keyBy分组的键（准确的说是主要组成部分） 然后发现这两次测试都出现了一个意料之外的问题，就是将<strong>n个只含有1个指标的规则</strong>合并成<strong>一个含有n个指标的规则之后</strong>，效率并没有像预期中的提高n倍，不能提高n倍也就算了，甚至连原有效率高都没有，一条规则含有的指标越多效率越低，最后不到原有效率的十分之一。更残酷的是在这个支持多个指标聚合的代码上面，不开启多个指标而依然使用原先的一个规则一个指标，效率完全没有降低，甚至还比旧代码的一个规则一个指标快了1.5倍左右。sad</p>
-<p><img src="http://pvx5csxk4.bkt.clouddn.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg" alt="avatar"><br>CoFlatMap到window的流程就是上图所示，flatMap是业务逻辑，然后生成的数据根据指标进行分组分发到窗口</p>
+<p><img src="http://pic-test.xinshenwoyaoxue.com/%E9%A2%84%E5%A4%84%E7%90%86.jpg" alt="avatar"><br>CoFlatMap到window的流程就是上图所示，flatMap是业务逻辑，然后生成的数据根据指标进行分组分发到窗口</p>
 <h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><p>把问题抽象出来就是在进行数据分组再聚合的问题过程中，减少了keyBy的分组键个数，让每一个窗口处理更多的数据，效率不仅不会提升，还会严重下降，这不科学啊，让一个窗口处理更多的数据，减少了创建再聚合窗口的开销，效率不说会有质的飞跃，但是肯定不会下降啊，然而kafka不断堆积的数量，无情的打着脸。</p>
 <h3 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h3><h4 id="业务代码问题"><a href="#业务代码问题" class="headerlink" title="业务代码问题"></a>业务代码问题</h4><p>最初还是坚持keyBy分组减少不会影响窗口聚合效率的想法，首先怀疑是自己业务代码的问题，分析了下代码可能出现问题的两个地方是</p>
 <ol>
@@ -402,15 +402,15 @@
 </li>
 <li><p>但是总是感觉“没有实践就没有发言权”，我还是去实际测试一下看看吧</p>
 <ul>
-<li><p>先看一下CoFlatMap模块的subtask，没问题，大致是均匀的，因为这个问题上次已经通过rescale解决了<br><img src="http://pvx5csxk4.bkt.clouddn.com/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
+<li><p>先看一下CoFlatMap模块的subtask，没问题，大致是均匀的，因为这个问题上次已经通过rescale解决了<br><img src="http://pic-test.xinshenwoyaoxue.com/%E6%97%A0%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
 </li>
-<li><p>再看一下window聚合的subtask，woc，真的有数据倾斜，数据差值最多的能差到上百倍<br><img src="http://pvx5csxk4.bkt.clouddn.com/%E5%87%BA%E7%8E%B0%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
+<li><p>再看一下window聚合的subtask，woc，真的有数据倾斜，数据差值最多的能差到上百倍<br><img src="http://pic-test.xinshenwoyaoxue.com/%E5%87%BA%E7%8E%B0%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
 </li>
 <li><p>为什么会这样，不科学啊，之前看到的所有的backPressure的值全部都是0.8到0.9啊，赶紧再次去核实一下，所有的CoFlatMap的backPressure值都是0.8左右，都是很高的负载，没有数据倾斜的征兆</p>
 </li>
 <li><p>看了下所有的window的subtask的backPressure值都是0</p>
 </li>
-<li><p>数据倾斜问题这么严重？那我们线上代码怎么运行这么久的，赶紧去看一下线上的代码，线上代码果然也存在数据倾斜的问题，最多的能差到10倍左右！！！<br><img src="http://pvx5csxk4.bkt.clouddn.com/%E7%BA%BF%E4%B8%8A%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
+<li><p>数据倾斜问题这么严重？那我们线上代码怎么运行这么久的，赶紧去看一下线上的代码，线上代码果然也存在数据倾斜的问题，最多的能差到10倍左右！！！<br><img src="http://pic-test.xinshenwoyaoxue.com/%E7%BA%BF%E4%B8%8A%E5%80%BE%E6%96%9C.png" alt="avatar"></p>
 <p>大致原因是找到了，应该就是数据倾斜的问题，可是为什么会这样啊，这个数据倾斜产生的很离奇啊，而且线上也有倾斜却没有问题，自己的工程却性能降到原来的十分之一！</p>
 </li>
 </ul>
@@ -423,7 +423,7 @@
 <li><p>线上代码运行了那么久都没有问题，自己这个却直接挂掉了，还有就是自己的倾斜幅度达到了100倍（挂掉的原因其实也是因为这个了）</p>
 </li>
 </ol>
-<h4 id="疑惑1的分析"><a href="#疑惑1的分析" class="headerlink" title="疑惑1的分析"></a>疑惑1的分析</h4><p>再次掏出了整个程序的拓扑图<br><img src="http://pvx5csxk4.bkt.clouddn.com/hash%E5%9B%BE.jpg" alt="avatar"></p>
+<h4 id="疑惑1的分析"><a href="#疑惑1的分析" class="headerlink" title="疑惑1的分析"></a>疑惑1的分析</h4><p>再次掏出了整个程序的拓扑图<br><img src="http://pic-test.xinshenwoyaoxue.com/hash%E5%9B%BE.jpg" alt="avatar"></p>
 <p>模块1是kafka读取模块，模块2是CoFlatMap模块，模块3是窗口聚合模块，程序运行的时候</p>
 <ol>
 <li>kafka模块无数据倾斜，因为是一个分区对应一个subtask，所有的subtask的backPressure都是0.9+</li>

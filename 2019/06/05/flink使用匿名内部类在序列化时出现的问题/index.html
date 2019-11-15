@@ -62,12 +62,12 @@
 <meta property="og:site_name" content="这是id啊">
 <meta property="og:description" content="这几天在做项目的时候开始尝试使用匿名内部类生成集合类对象，十分的爽，本来好几行的代码变成了一个花括弧就解决，但是在做一个flink的路径优化的算法时，出现了一个离奇的bug org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next o">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://pvx5csxk4.bkt.clouddn.com/QQ20190604-182202.png">
-<meta property="og:updated_time" content="2019-08-08T13:54:34.100Z">
+<meta property="og:image" content="http://pic-test.xinshenwoyaoxue.com/QQ20190604-182202.png">
+<meta property="og:updated_time" content="2019-11-15T06:11:02.808Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="flink使用匿名内部类在序列化时出现的问题">
 <meta name="twitter:description" content="这几天在做项目的时候开始尝试使用匿名内部类生成集合类对象，十分的爽，本来好几行的代码变成了一个花括弧就解决，但是在做一个flink的路径优化的算法时，出现了一个离奇的bug org.apache.flink.streaming.runtime.tasks.ExceptionInChainedOperatorException: Could not forward element to next o">
-<meta name="twitter:image" content="http://pvx5csxk4.bkt.clouddn.com/QQ20190604-182202.png">
+<meta name="twitter:image" content="http://pic-test.xinshenwoyaoxue.com/QQ20190604-182202.png">
   <link rel="canonical" href="http://yangaidi.com/2019/06/05/flink使用匿名内部类在序列化时出现的问题/">
 
 
@@ -279,7 +279,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-08-08 21:54:34" itemprop="dateModified" datetime="2019-08-08T21:54:34+08:00">2019-08-08</time>
+                <time title="修改时间：2019-11-15 14:11:02" itemprop="dateModified" datetime="2019-11-15T14:11:02+08:00">2019-11-15</time>
               </span>
             
           
@@ -363,7 +363,7 @@
 <h4 id="继续找bug"><a href="#继续找bug" class="headerlink" title="继续找bug"></a>继续找bug</h4><ul>
 <li>明明数据一模一样，就是结果不同，直接把俩代码弄到一起跑，打断点一行一行看有什么区别</li>
 </ul>
-<p><img src="http://pvx5csxk4.bkt.clouddn.com/QQ20190604-182202.png" alt="48466e698d753d213eea85f03789bb90.png"></p>
+<p><img src="http://pic-test.xinshenwoyaoxue.com/QQ20190604-182202.png" alt="48466e698d753d213eea85f03789bb90.png"></p>
 <ul>
 <li>果然，两个map里的list的类型竟然不一样，我明明声明的都是 <code>Map&lt;Integer,Set&lt;Integer&gt;&gt;</code>啊！！！而下面这个为什么不是list类型，而是他所在的“实体类的类型”，为啥会这样，为啥会这样？</li>
 <li>仔细对比代码，生成逻辑唯一的差别可能是这个list的生成方式不一样？有错误的使用了一行代码就从生成到put进map，而那个挫代码一个一个new然后put，不然我也试试，把这个也降级下，死马当成活马医</li>
